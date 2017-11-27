@@ -3,9 +3,7 @@
 WooCommerce Payment Gateway que funciona con 4Geeks Payments.
 
 Este plugin es gratis y de código libre. Siéntete libre de agregar nuevas funcionalidades 
-que hagan más robustas las transacciones de tus proyectos.
-
-Actualmente permite el pago simple por tarjeta de crédito o débito.
+que hagan más robustas las transacciones de tus proyectos. Actualmente permite el pago simple por tarjeta de crédito o débito.
 
 Instalación
 ==========
