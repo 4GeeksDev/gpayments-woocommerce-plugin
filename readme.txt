@@ -1,5 +1,5 @@
 === GPayments Woocommerce ===
-Contributors: alpocr
+Contributors: alpocr, segiomonge10
 Tags: payment gateway, 4geeks, costa rica
 Requires at least: 3.5.2
 Tested up to: 4.2.2
