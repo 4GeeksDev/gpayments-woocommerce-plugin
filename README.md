@@ -8,7 +8,7 @@ que hagan más robustas las transacciones de tus proyectos. Actualmente permite 
 Instalación
 ==========
 
-La forma más fácil de instalar este plugin es mediante el instalador de plugins de Wordpress.
+La forma más fácil de instalar este plugin es mediante el instalador de plugins de Wordpress. Mira el sitio del plugin en este link: https://wordpress.org/plugins/payments4g-4geeks-payments/
 
 La otra manera es clonando directamente este repositorio en tu computadora:
 * git clone https://github.com/4GeeksDev/gpayments-woocommerce-plugin.git
