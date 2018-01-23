@@ -123,6 +123,9 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 								"client_id" => $this->client_id,
 								"client_secret" => $this->client_secret );
 
+		if(empty($_POST['wc-4gpayments-card-number']) || empty($_POST['wc-4gpayments-card-cvc']) || empty($_POST['wc-4gpayments-card-expiry'])){
+			throw new Exception( __( 'N&#250;mero de Tarjeta, Fecha de Expiraci&#243;n y CVC son requeridos', 'wc-4gpayments' ) );
+		}
 
 		$response_token = wp_remote_post( $api_auth_url, array(
 				'method' => 'POST',
@@ -134,10 +137,9 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 
 		$api_token = json_decode( wp_remote_retrieve_body($response_token), true)['access_token'];
 
-		if(!empty($_POST['wc-4gpayments-card-number']) && !empty($_POST['wc-4gpayments-card-cvc']) && !empty($_POST['wc-4gpayments-card-expiry'])){
 			// This is where the fun stuff begins
 			if($this->entity_description == ''){
-				$this->entity_description = 'Pago procesado por 4Geeks Payments';
+				$this->entity_description = 'Pago a traves de 4GP';
 			}
 			$payload = array(
 				"amount"             	=> $customer_order->get_total(),
@@ -150,9 +152,6 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 				"exp_year" 				=> "20" . substr($_POST['wc-4gpayments-card-expiry'], -2),
 
 			);
-		}else{
-			throw new Exception( __( 'N&#250;mero de Tarjeta, Fecha de Expiraci&#243;n y CVC son requeridos', 'wc-4gpayments' ) );
-		}
 
 		// Send this payload to 4GP for processing
 		$response = wp_remote_post( $api_url, array(
