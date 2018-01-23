@@ -144,7 +144,7 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 			$payload = array(
 				"amount"             	=> $customer_order->get_total(),
 				"description"           => $this->charge_description,
-				"entity_description"    => $this->entity_description,
+				"entity_description"    => strtoupper($this->entity_description),
 				"currency"           	=> get_woocommerce_currency(),
 				"credit_card_number"    => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
 				"credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
