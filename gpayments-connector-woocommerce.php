@@ -123,7 +123,7 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 								"client_id" => $this->client_id,
 								"client_secret" => $this->client_secret );
 
-		if(empty($_POST['wc-4gpayments-card-number']) || empty($_POST['wc-4gpayments-card-cvc']) ||  empty($_POST['wc-4gpayments-card-expiry'])){
+		if(empty($_POST['wc-4gpayments-card-number']) || empty($_POST['wc-4gpayments-card-cvc']) || empty($_POST['wc-4gpayments-card-expiry'])){
 			throw new Exception( __( 'N&#250;mero de Tarjeta, Fecha de Expiraci&#243;n y CVC son requeridos', 'wc-4gpayments' ) );
 		}
 		$response_token = wp_remote_post( $api_auth_url, array(
@@ -142,8 +142,8 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 			}
 			$payload = array(
 				"amount"             	=> $customer_order->get_total(),
-				"description"           => $this->description,
-				"entity_description"    => $this->entity_description,
+				"description"           => $this->charge_description,
+				"entity_description"    => strtoupper($this->entity_description),
 				"currency"           	=> get_woocommerce_currency(),
 				"credit_card_number"    => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
 				"credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
