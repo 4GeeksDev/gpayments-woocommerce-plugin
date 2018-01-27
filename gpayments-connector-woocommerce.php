@@ -39,8 +39,10 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 		if ( is_admin() ) {
 			add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 		}
+		if ( ! session_id() && is_user_logged_in() ) {
+			session_start();
+		}
 	} // Here is the  End __construct()
-
 
 	// administration fields for specific Gateway
 	public function init_form_fields() {
@@ -105,6 +107,20 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 				),
 			)
 		);
+		/*?>
+				<script type='text/javascript' src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+				<script type="text/javascript">
+				$(document).ready(function(){
+						$(":submit").click(function () {
+						//saco el valor accediendo a un input de tipo text y name = nombre
+							var client_id = $('#woocommerce_wc-4gpayments_client_id').val();
+							var client_secret = $('#woocommerce_wc-4gpayments_client_secret').val();
+						});
+					});
+				</script>
+		<?php*/
+		$_SESSION["client_id"] = $_POST["woocommerce_wc-4gpayments_client_id"];
+		$_SESSION["client_secret"] = $_POST["woocommerce_wc-4gpayments_client_secret"];
 	}
 
 	// Response handled for payment gateway
@@ -215,7 +231,6 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 function register_simple_rental_product_type() {
 
 	class WC_Product_Simple_Rental extends WC_Product {
-		    public $WC_GPayments_Connection;
 			public function __construct( $product ) {
 
 			$this->product_type = 'simple_rental';
@@ -224,9 +239,7 @@ function register_simple_rental_product_type() {
 	}
 }
 add_action( 'plugins_loaded', 'register_simple_rental_product_type' );
-/**
- * Add to product type drop down.
- */
+
 function add_simple_rental_product( $types ){
 
 	// Key should be exactly the same as in the class
@@ -238,9 +251,6 @@ function add_simple_rental_product( $types ){
 add_filter( 'product_type_selector', 'add_simple_rental_product' );
 
 
-/**
- * Show pricing fields for simple_rental product.
- */
 function simple_rental_custom_js() {
 
 	if ( 'product' != get_post_type() ) :
@@ -258,15 +268,13 @@ function simple_rental_custom_js() {
 add_action( 'admin_footer', 'simple_rental_custom_js' );
 
 
-/**
- * Add a custom product tab.
- */
+
 function custom_product_tabs( $tabs) {
 
 	$tabs['rental'] = array(
 		'label'		=> __( 'Planes', 'woocommerce' ),
 		'target'	=> 'rental_options',
-		'class'		=> array( 'show_if_simple_rental', 'show_if_variable_rental'  ),
+		'class'		=> array( 'show_if_simple_rental', 'show_if_variable_rental'),
 	);
 
 	return $tabs;
@@ -275,25 +283,27 @@ function custom_product_tabs( $tabs) {
 add_filter( 'woocommerce_product_data_tabs', 'custom_product_tabs' );
 
 
-/**
- * Contents of the rental options product tab.
- */
+
 function rental_options_product_tab_content() {
 
 	global $post;
+	$Client_Id = $_SESSION["client_id"];
+	$Client_Secret = $_SESSION["client_secret"];
 
-	$this->WC_GPayments_Connection = new WC_GPayments_Connection();
+	echo $_SESSION["client_id"];die;
+	$data_to_send = array("grant_type" => "client_credentials",
+							"client_id" => $Client_Id,
+							"client_secret" => $Client_Secret);
 
-	$this->WC_GPayments_Connection->init_form_fields();
 
-	echo var_dump($this->init_form_fields->client_secret);
+	//echo var_dump($data_to_send) . "<br>";
+	echo $_SESSION["woocommerce_wc-4gpayments_client_id"]. "<br>";
+	echo $Client_Secret. "<br>";
 
 	die;
 
-	$data_to_send = array("grant_type" => "client_credentials",
-							"client_id" => $this->init_form_fields->client_id,
-							"client_secret" => $this->init_form_fields->client_secret );
 	$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
+
 	$response_token = wp_remote_post( $api_auth_url, array(
 			'method' => 'POST',
 			'timeout' => 90,
@@ -319,9 +329,9 @@ function rental_options_product_tab_content() {
 	$server_output = curl_exec ($ch);
 	curl_close ($ch);
 
-	/*foreach ($array as &$valor) {
-	    $valor = $valor * 2;
-	}*/
+	//foreach ($array as &$valor) {
+	  //  $valor = $valor * 2;
+//	}
 	// $array ahora es array(2, 4, 6, 8)
 	//unset($valor);
 
@@ -343,9 +353,6 @@ function rental_options_product_tab_content() {
 add_action( 'woocommerce_product_data_panels', 'rental_options_product_tab_content' );
 
 
-/**
- * Save the custom fields.
- */
 function save_rental_option_field( $post_id ) {
 
 	$rental_option = isset( $_POST['_enable_renta_option'] ) ? 'yes' : 'no';
@@ -360,9 +367,7 @@ add_action( 'woocommerce_process_product_meta_simple_rental', 'save_rental_optio
 add_action( 'woocommerce_process_product_meta_variable_rental', 'save_rental_option_field'  );
 
 
-/**
- * Hide Attributes data panel.
- */
+
 function hide_attributes_data_panel( $tabs) {
 
 	$tabs['attribute']['class'][] = 'hide_if_simple_rental hide_if_variable_rental';
