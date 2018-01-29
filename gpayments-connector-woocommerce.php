@@ -107,20 +107,6 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 				),
 			)
 		);
-		/*?>
-				<script type='text/javascript' src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-				<script type="text/javascript">
-				$(document).ready(function(){
-						$(":submit").click(function () {
-						//saco el valor accediendo a un input de tipo text y name = nombre
-							var client_id = $('#woocommerce_wc-4gpayments_client_id').val();
-							var client_secret = $('#woocommerce_wc-4gpayments_client_secret').val();
-						});
-					});
-				</script>
-		<?php*/
-		$_SESSION["client_id"] = $_POST["woocommerce_wc-4gpayments_client_id"];
-		$_SESSION["client_secret"] = $_POST["woocommerce_wc-4gpayments_client_secret"];
 	}
 
 	// Response handled for payment gateway
@@ -287,8 +273,26 @@ add_filter( 'woocommerce_product_data_tabs', 'custom_product_tabs' );
 function rental_options_product_tab_content() {
 
 	global $post;
-	$Client_Id = $_SESSION["client_id"];
-	$Client_Secret = $_SESSION["client_secret"];
+
+	?>
+			<script type='text/javascript' src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+			<script type="text/javascript">
+			$(document).ready(function(){
+					//$(":submit").click(function () {
+					//saco el valor accediendo a un input de tipo text y name = nombre
+						var client_id = $('#woocommerce_wc-4gpayments_client_id').val();
+						var client_secret = $('#woocommerce_wc-4gpayments_client_secret').val();
+						alert(client_id);
+						alert(client_secret);
+					//});
+				});
+			</script>
+	<?php
+	//$_SESSION["client_id"] = $_POST["woocommerce_wc-4gpayments_client_id"];
+	//$_SESSION["client_secret"] = $_POST["woocommerce_wc-4gpayments_client_secret"];
+
+	//$Client_Id = $_SESSION["client_id"];
+	//$Client_Secret = $_SESSION["client_secret"];
 
 	echo $_SESSION["client_id"];die;
 	$data_to_send = array("grant_type" => "client_credentials",
