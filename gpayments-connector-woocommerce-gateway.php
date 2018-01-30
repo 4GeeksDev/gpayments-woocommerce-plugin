@@ -3,7 +3,7 @@
 Plugin Name: payments4G - 4Geeks Payments
 Plugin URI: https://4geeks.io/payments
 Description: 4Geeks Payments integration Woocommerce
-Version: 1.0
+Version: 2.0.17
 */
 add_action( 'plugins_loaded', 'cw_gpayments_init', 0 );
 function cw_gpayments_init() {

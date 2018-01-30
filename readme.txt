@@ -3,7 +3,7 @@ Contributors: alpocr, segiomonge10
 Tags: payment gateway, 4geeks, costa rica
 Requires at least: 3.5.2
 Tested up to: 4.9
-Stable tag: 2.0.16
+Stable tag: 2.0.17
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,10 +30,10 @@ Current version features:
 
 == Changelog ==
 
-= 0.2.0 =
+= 2.0.17 =
 * Errors handler.
 * Errors multiple language.
 
-= 0.1.0 =
+= 1.0.0 =
 * Online payments - Simple charge.
 * Sandbox testing capability.
