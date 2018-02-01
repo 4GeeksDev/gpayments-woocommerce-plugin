@@ -39,13 +39,11 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 		if ( is_admin() ) {
 			add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 		}
-		if ( ! session_id() && is_user_logged_in() ) {
-			session_start();
-		}
 	} // Here is the  End __construct()
 
 	// administration fields for specific Gateway
 	public function init_form_fields() {
+
 		$this->form_fields = array(
 			'enabled' => array(
 				'title'		=> __( 'Activo / Inactivo', 'wc-4gpayments' ),
@@ -107,6 +105,7 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 				),
 			)
 		);
+
 		$nombre_archivo = "auth.txt";
 	    if(file_exists($nombre_archivo)){
 	        //$mensaje = "El Archivo $nombre_archivo se ha modificado";
@@ -115,7 +114,7 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 	    }
 
 	    if($archivo = fopen($nombre_archivo, "w")){
-	        if(fwrite($archivo, $_POST['woocommerce_wc-4gpayments_client_id']. " ".$_POST['woocommerce_wc-4gpayments_client_secret']. "\n")){
+	        if(fwrite($archivo, $_POST['woocommerce_wc-4gpayments_client_id']." ".$_POST['woocommerce_wc-4gpayments_client_secret']."\n")){
 	            //echo "Se ha ejecutado correctamente";
 	        }else{
 	            //echo "Ha habido un problema al crear el archivo";
@@ -286,7 +285,6 @@ add_filter( 'woocommerce_product_data_tabs', 'custom_product_tabs' );
 
 
 function rental_options_product_tab_content() {
-
 	global $post, $woocommerce;
 
 	if (!$fp = fopen("auth.txt", "r")){
@@ -299,118 +297,66 @@ function rental_options_product_tab_content() {
 
 	$credentials = explode(" ", $contents);
 
-	$Client_Aunt = $credentials[3];
+	$Client_Id = trim($credentials[0]);
+	$Client_Secret = trim($credentials[1]);
 
 
-	// $api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
-    //
-	// $data_to_send = array("grant_type"=>"client_credentials",
-	// 					  "client_id" => "kGnxskOMNedrqj8IVma23Qk2DQGpjjpAUUPLr85W",
-	// 					  "client_secret" => "VbCaLax7xnhsBIfmkwic6ifSZ4FRiMRfwrrtdSKhw89f17LRdyeW7zYYKLwvj2VLRbQzH6q0F7mRejGJwBIckHa7W2PlJNN4QLqQcnCMYQkYj1DK4uUv0MVCbYhVeyTX"
-	// 				);
-    //
-	// $response_token = wp_remote_post( $api_auth_url, array(
-	// 		'method' => 'POST',
-	// 		'timeout' => 90,
-	// 		'blocking' => true,
-	// 		'headers' => array('content-type' => 'application/json'),
-	// 		'body' => json_encode($data_to_send, true)
-	// 	) );
-    //
-	// $api_token = json_decode( wp_remote_retrieve_body($response_token), true)['access_token'];
-    //
-	// $nombre_archivo = "auth.txt";
-	//  if(file_exists($nombre_archivo)){
-	// 	//$mensaje = "El Archivo $nombre_archivo se ha modificado";
-	// 	}else{
-	// 		//$mensaje = "El Archivo $nombre_archivo se ha creado";
-	// 	}
-    //
-	// if($archivo = fopen($nombre_archivo, "w")){
-	// 	if(fwrite($archivo, $Client_Id. " " . $Client_Secret . " $api_token " . . "\n")){
-	// 		//echo "Se ha ejecutado correctamente";
-	// 	}else{
-	// 		//echo "Ha habido un problema al crear el archivo";
-	// 	}
-	// 	 fclose($archivo);
+	$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
 
-	$body = array(
-		'X GET',
-		"-H authorization: bearer  $Client_Aunt"
-	);
+	$data_to_send = array("grant_type"=>"client_credentials",
+	 					  "client_id" => $Client_Id,
+	 					  "client_secret" => $Client_Secret
+	 				);
+	$response_token = wp_remote_post( $api_auth_url, array(
+	 		'method' => 'POST',
+	 		'timeout' => 90,
+	 		'blocking' => true,
+	 		'headers' => array('content-type' => 'application/json'),
+	 		'body' => json_encode($data_to_send, true)
+	 	) );
 
-	$api_plan_url = 'https://api.payments.4geeks.io/v1/plans/mine';
 
-	$response_plan = wp_remote_post( $api_plan_url,
-						array(
-							'method' => 'GET',
-							'timeout' => 90,
-							'blocking' => true,
-							'headers' => array('content-type' => 'application/json'),
-							'body' => json_encode($body, true)
-						)
-								  );
+	$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
 
-  $planes =  wp_remote_retrieve_body(json_decode($response_plan), true);
+	if($api_token != '' && $api_token != NULL && $api_token != 'undefined'){
+		$api_plan_url = 'https://api.payments.4geeks.io/v1/plans/mine';
+		$response_plan = wp_remote_get($api_plan_url, array('headers' => 'authorization: bearer ' . $api_token));
+
+		$plans =  json_decode(wp_remote_retrieve_body($response_plan),true);
+
+	}else{
+		echo "Api token Empty";
+	}
+	$options[''] = __( 'Seleccione un valor', 'woocommerce'); // default value
+
+	foreach($plans as $key => $opt){
+			$optName = $opt['information']['name'];
+			$options[] = $optName;
+	}
 
 	?><div id='rental_options' class='panel woocommerce_options_panel'><?php
 		?><div class='options_group'><?php
 
 			woocommerce_wp_select( array(
-				'label' => __('Planes Consultados', 'woocommerce'),
-				'options' => array($planes)
+				'id' => 'gpayment_plan_option',
+				'label' => __('Planes Disponibles', 'woocommerce'),
+				'options' => $options
 				)
 			);
 		?></div>
 	</div><?php
-
-
 }
 add_action( 'woocommerce_product_data_panels', 'rental_options_product_tab_content' );
 
 
 function save_rental_option_field( $post_id ) {
 
-	$rental_option = isset( $_POST['_enable_renta_option'] ) ? 'yes' : 'no';
-	update_post_meta( $post_id, '_enable_renta_option', $rental_option );
+	$rental_option = isset( $_POST['gpayment_plan_option'] ) ? 'yes' : 'no';
+	update_post_meta( $post_id, 'gpayment_plan_option', $rental_option );
 
-	if (!$fp = fopen("auth.txt", "r")){
-		echo "The file can't be opened";
-	}
-	$file = "auth.txt";
-	$fp = fopen($file, "r");
-	$contents = fread($fp, filesize($file));
-	fclose($fp);
-
-	$credentials = explode(" ", $contents);
-
-	$Client_Aunt = $credentials[3];
-
-	 $api_create_plan = 'https://api.payments.4geeks.io/v1/plans/create/';
-	 $dataBody = array(
-		 '-X POST',
-	     "-H authorization: bearer $Client_Aunt",
-	     '-F name=Monthly Plan',
-	     '-F amount=300000',
-	     '-F currency=crc',
-	     '-F trial_period_days=0',
-	     '-F interval=month',
-	     '-F interval_count=1', \
-	     '-F credit_card_description=Descripción'
-	);
-
-	$response_plan = wp_remote_post( $api_plan_url,
-						array(
-							'method' => 'GET',
-							'timeout' => 90,
-							'blocking' => true,
-							'headers' => array('content-type' => 'application/json'),
-							'body' => json_encode($body, true)
-						)
-								   );
-
-	if ( isset( $_POST['_text_input_y'] ) ) :
-		update_post_meta( $post_id, '_text_input_y', sanitize_text_field( $_POST['_text_input_y'] ) );
+	if ( isset( $_POST['gpayment_plan_option'] ) ) :
+		update_post_meta( $post_id, 'gpayment_plan_option', sanitize_text_field( $_POST['gpayment_plan_option'] ) );
+		//update_post_meta( $post_id, 'gpayment_plan_option', sanitize_text_field( $_POST['gpayment_plan_option'] ) ); Recuperar precios y demas detalles para guardar en wp
 	endif;
 
 }
