@@ -327,22 +327,151 @@ function rental_options_product_tab_content() {
 	}else{
 		echo "Api token Empty";
 	}
+	$i = 0;
 	$options[''] = __( 'Seleccione un valor', 'woocommerce'); // default value
-
 	foreach($plans as $key => $opt){
-			$optName = $opt['information']['name'];
-			$options[] = $optName;
+		$options[] = $opt['information']['name'];
+		$value[]   = $i++;
+		$currency[] = $opt['information']['currency'];
+	    $amount[] = $opt['information']['amount'];
+	    $trial[] = $opt['information']['trial_period_days'];
+		$interval[] = $opt['information']['interval'];
+		$icount[] = $opt['information']['interval_count'];
+		$cc_description = $opt['information']['credit_card_description'];
 	}
+	/*
+	"currency": "crc",
+    "amount": 6000,
+    "name": "Test Plan",
+    "created": '2017-11-30 17:52:23',
+    "credit_card_description": "Charge Test",
+    "trial_period_days": null,
+    "interval": "month",
+	*/
 
 	?><div id='rental_options' class='panel woocommerce_options_panel'><?php
 		?><div class='options_group'><?php
+			if ($mofile != '-es_CR.mo'){
+				$currency_label = __('Currency: ','woocommerce');
+				$amout_label = __('Amount: ','woocommerce');
+				$trial_label = __('Time trial: ','woocommerce');
+				$c_descrip_label = __('Card Description: ','woocommerce');
+				$interval_label = __('Interval: ','woocommerce');
+				$icount_label = __('Count: ','woocommerce');
+				$cu_tooltip = __( 'Currency', 'woocommerce' );
+				$cc_tooltip = __('Description on credit card customer balance', 'woocommerce' );
+				$tr_tooltip = __( 'Days of free use', 'woocommerce' );
+				$in_tooltip = __( 'Frecuency of charges', 'woocommerce' );
+				$ic_tooltip = __( 'Months', 'woocommerce' );
+				$am_tooltip = __( 'Amount', 'woocommerce' );
+			}else{
+				$currency_label = __('Moneda: ','woocommerce');
+				$amout_label = __('Precio: ','woocommerce');
+				$trial_label = __('Prueba Gratuita: ','woocommerce');
+				$c_descrip_label = __('Descripcion Tarjeta: ','woocommerce');
+				$interval_label = __('Intérvalo: ','woocommerce');
+				$icount_label = __('Meses: ','woocommerce');
+				$cu_tooltip = __( 'Moneda en la cual se haran los rebajos', 'woocommerce' );
+				$cc_tooltip = __( 'Descripcion para el estado de cuenta de la tarjeta del cliete', 'woocommerce' );
+				$tr_tooltip = __( 'Numero de dias en las cuales se le brindara al usuario un trial', 'woocommerce' );
+				$in_tooltip = __( 'Frecuenca de rebajos', 'woocommerce' );
+				$ic_tooltip = __( 'Meses', 'woocommerce' );
+				$am_tooltip = __( 'Monto', 'woocommerce' );
 
+			}
 			woocommerce_wp_select( array(
-				'id' => 'gpayment_plan_option',
-				'label' => __('Planes Disponibles', 'woocommerce'),
+				'id'  	  => 'gpayment_plan_option',
+				'label'   => __('Planes Disponibles', 'woocommerce'),
 				'options' => $options
-				)
-			);
+			) );
+			?>
+			<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+			<script type="text/javascript">
+			jQuery(document).ready(function(){
+				$('#gpayment_plan_option').change(function(){
+					var param = $('#gpayment_plan_option').val();
+					//alert("Ha sido ejecutada la acción." + param);
+					$.ajax({
+						url:"gpayments-conector-woocommerce.php",
+						type: "POST",
+						data: {
+							param : param
+						},
+						success: function(){
+							alert("Ha sido ejecutada la acción." + param);
+						}
+					});
+				});
+			});
+			</script>
+			<?php
+			//$a_position = array_search($options, )
+			woocommerce_wp_text_input( array(
+				'id'			=> 'currency',
+				'label'			=> $currency_label,
+				'desc_tip'		=> 'true',
+				'description'	=> $cu_tooltip,
+				'type' 			=> 'text',
+				'value'			=> $currency[0],
+				'custom_attributes' => array(
+					'disable' => 'true'
+				),
+			) );
+			woocommerce_wp_text_input( array(
+				'id'			=> 'amount',
+				'label'			=> $amout_label,
+				'desc_tip'		=> 'true',
+				'description'	=> $am_tooltip,
+				'type' 			=> 'text',
+				'value'			=> $amount[0],
+				'custom_attributes' => array(
+					'disable' => 'true'
+				),
+			) );
+			woocommerce_wp_text_input( array(
+				'id'			=> 'trial',
+				'label'			=> $trial_label,
+				'desc_tip'		=> 'true',
+				'description'	=> $tr_tooltip,
+				'type' 			=> 'text',
+				'value'  		=> $trial[0],
+				'custom_attributes' => array(
+					'disable' => 'true'
+				),
+			) );
+			woocommerce_wp_text_input( array(
+				'id'			=> 'card_description',
+				'label'			=> $c_descrip_label,
+				'desc_tip'		=> 'true',
+				'description'	=> $cc_tooltip,
+				'type' 			=> 'text',
+				'value'   		=> $cc_description[0],
+				'custom_attributes' => array(
+					'disable' => 'true'
+				),
+			) );
+			woocommerce_wp_text_input( array(
+				'id'			=> 'interval',
+				'label'			=> $interval_label,
+				'desc_tip'		=> 'true',
+				'description'	=> $in_tooltip,
+				'type' 			=> 'text',
+				'value'   		=> $interval[0],
+				'custom_attributes' => array(
+					'disable' => 'true'
+				),
+			) );
+			woocommerce_wp_text_input( array(
+				'id'			=> 'icount',
+				'label'			=> $icount_label,
+				'desc_tip'		=> 'true',
+				'description'	=> $ic_tooltip,
+				'type' 			=> 'text',
+				'value'   		=> $icount[0],
+				'custom_attributes' => array(
+					'disable' => 'true'
+				),
+			) );
 		?></div>
 	</div><?php
 }
@@ -355,7 +484,14 @@ function save_rental_option_field( $post_id ) {
 	update_post_meta( $post_id, 'gpayment_plan_option', $rental_option );
 
 	if ( isset( $_POST['gpayment_plan_option'] ) ) :
-		update_post_meta( $post_id, 'gpayment_plan_option', sanitize_text_field( $_POST['gpayment_plan_option'] ) );
+		update_post_meta( $post_id, 'gpayment_plan_option'
+		, sanitize_text_field( $_POST['currency'] )
+		, sanitize_text_field( $_POST['amount'] )
+		, sanitize_text_field( $_POST['trial'] )
+		, sanitize_text_field( $_POST['card_description'] )
+		, sanitize_text_field( $_POST['interval'] )
+		, sanitize_text_field( $_POST['icount'] )
+		);
 		//update_post_meta( $post_id, 'gpayment_plan_option', sanitize_text_field( $_POST['gpayment_plan_option'] ) ); Recuperar precios y demas detalles para guardar en wp
 	endif;
 
