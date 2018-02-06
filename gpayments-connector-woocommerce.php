@@ -94,33 +94,35 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 				'desc_tip'	=> __( 'API Client ID provisto por 4Geeks Payments.', 'wc-4gpayments' ),
 				'custom_attributes' => array(
 					'required' => 'required'
+					),
 				),
-			),
-			'client_secret' => array(
+				'client_secret' => array(
 				'title'		=> __( '4GP Client Secret', 'wc-4gpayments' ),
 				'type'		=> 'password',
 				'desc_tip'	=> __( 'API Client Secret provisto por 4Geeks Payments.', 'wc-4gpayments' ),
 				'custom_attributes' => array(
-					'required' => 'required'
+				'required' => 'required'
 				),
 			)
 		);
 
 		$nombre_archivo = "auth.txt";
-	    if(file_exists($nombre_archivo)){
-	        //$mensaje = "El Archivo $nombre_archivo se ha modificado";
-	    }else{
-	        //$mensaje = "El Archivo $nombre_archivo se ha creado";
-	    }
+		if(file_exists($nombre_archivo)){
+			//$mensaje = "El Archivo $nombre_archivo se ha modificado";
+		}else{
+			//$mensaje = "El Archivo $nombre_archivo se ha creado";
+		}
 
-	    if($archivo = fopen($nombre_archivo, "w")){
-	        if(fwrite($archivo, $_POST['woocommerce_wc-4gpayments_client_id']." ".$_POST['woocommerce_wc-4gpayments_client_secret']."\n")){
-	            //echo "Se ha ejecutado correctamente";
-	        }else{
-	            //echo "Ha habido un problema al crear el archivo";
-	        }
-         fclose($archivo);
-	    }
+		if($archivo = fopen($nombre_archivo, "w")){
+			if(fwrite($archivo, $_POST['woocommerce_wc-4gpayments_client_id']." ".$_POST['woocommerce_wc-4gpayments_client_secret']."\n")){
+				//echo "Se ha ejecutado correctamente";
+			}else{
+				//echo "Ha habido un problema al crear el archivo";
+			}
+			fclose($archivo);
+		}
+		//const client_id = $_POST['woocommerce_wc-4gpayments_client_id'];
+		//const client_secret = $_POST['woocommerce_wc-4gpayments_client_secret'];
 	}
 
 	// Response handled for payment gateway
@@ -232,7 +234,6 @@ function register_simple_rental_product_type() {
 
 	class WC_Product_Simple_Rental extends WC_Product {
 			public function __construct( $product ) {
-
 			$this->product_type = 'simple_rental';
 			parent::__construct( $product );
 		}
@@ -285,7 +286,7 @@ add_filter( 'woocommerce_product_data_tabs', 'custom_product_tabs' );
 
 
 function rental_options_product_tab_content() {
-	global $post, $woocommerce;
+	global $post;
 
 	if (!$fp = fopen("auth.txt", "r")){
 		echo "The file can't be opened";
@@ -299,6 +300,13 @@ function rental_options_product_tab_content() {
 
 	$Client_Id = trim($credentials[0]);
 	$Client_Secret = trim($credentials[1]);
+
+	/*$classname = 'WC_GPayments_Connection';
+	$classname::client_id;
+	$classname::client_secret;
+
+	$Client_Id = MyClass::client_id;
+	$Client_Secret = MyClass::client_secret;*/
 
 
 	$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
@@ -324,7 +332,8 @@ function rental_options_product_tab_content() {
 
 		$plans =  json_decode(wp_remote_retrieve_body($response_plan),true);
 	}else{
-		echo "Api token Empty";
+		echo "Save again your 4Geeks Payments Credencials on" . "<br>";
+		echo "Woocommerce/Settings/Checkout/4GPayments -> Save changes button";
 	}
 	$i = 0;
 	$options[''] = __( 'Seleccione un valor', 'woocommerce'); // default value
@@ -341,7 +350,7 @@ function rental_options_product_tab_content() {
 				$c_descrip_label = __('Card Description: ','woocommerce');
 				$interval_label = __('Interval: ','woocommerce');
 				$icount_label = __('Count: ','woocommerce');
-				
+
 				$cu_tooltip = __( 'Currency', 'woocommerce' );
 				$cc_tooltip = __('Description on credit card customer balance', 'woocommerce' );
 				$tr_tooltip = __( 'Days of free use', 'woocommerce' );
@@ -384,71 +393,64 @@ function rental_options_product_tab_content() {
 				?>
 				obj = plansJS;
 				jQuery(document).ready(function(){
-					$("#currency").prop('disabled', true);
-					$("#amount").prop('disabled', true);
-					$("#trial").prop('disabled', true);
-					$("#card_description").prop('disabled', true);
-					$("#interval").prop('disabled', true);
-					$("#icount").prop('disabled', true);
-
 					$('#gpayment_plan_option').change(function(){
 						var param = $('#gpayment_plan_option').val();
 						if (param == ''){
-							$("#currency").val('');
-							$("#amount").val('');
-							$("#trial").val('');
-							$("#card_description").val('');
-							$("#interval").val('');
-							$("#icount").val('');
+							$("#_currency").val('');
+							$("#_amount").val('');
+							$("#_trial").val('');
+							$("#_card_description").val('');
+							$("#_interval").val('');
+							$("#_icount").val('');
 						}else{
-							$("#currency").val(obj[param].information.currency);
-							$("#amount").val(obj[param].information.amount);
-							$("#trial").val(obj[param].information.trial_period_days);
-							$("#card_description").val(obj[param].information.credit_card_description);
-							$("#interval").val(obj[param].information.interval);
-							$("#icount").val(obj[param].information.interval_count);
+							$("#_currency").val(obj[param].information.currency);
+							$("#_amount").val(obj[param].information.amount);
+							$("#_trial").val(obj[param].information.trial_period_days);
+							$("#_card_description").val(obj[param].information.credit_card_description);
+							$("#_interval").val(obj[param].information.interval);
+							$("#_icount").val(obj[param].information.interval_count);
 						}
 					});
 				});
 				</script>
 			<?php
 			woocommerce_wp_text_input( array(
-				'id'			=> 'currency',
+				'id'			=> '_currency',
 				'label'			=> $currency_label,
 				'desc_tip'		=> 'true',
 				'description'	=> $cu_tooltip,
 				'type' 			=> 'text',
 			) );
 			woocommerce_wp_text_input( array(
-				'id'			=> 'amount',
+				'id'			=> '_amount',
 				'label'			=> $amout_label,
 				'desc_tip'		=> 'true',
 				'description'	=> $am_tooltip,
 				'type' 			=> 'text',
 			) );
 			woocommerce_wp_text_input( array(
-				'id'			=> 'trial',
+				'id'			=> '_trial',
 				'label'			=> $trial_label,
 				'desc_tip'		=> 'true',
 				'description'	=> $tr_tooltip,
 				'type' 			=> 'text',
 			) );
 			woocommerce_wp_text_input( array(
-				'id'			=> 'card_description',
+				'id'			=> '_card_description',
 				'label'			=> $c_descrip_label,
 				'desc_tip'		=> 'true',
 				'description'	=> $cc_tooltip,
 				'type' 			=> 'text',
 			) );
 			woocommerce_wp_text_input( array(
-				'id'			=> 'interval',
+				'id'			=> '_interval',
 				'label'			=> $interval_label,
 				'desc_tip'		=> 'true',
 				'description'	=> $in_tooltip,
 				'type' 			=> 'text',
 			) );
 			woocommerce_wp_text_input( array(
-				'id'			=> 'icount',
+				'id'			=> '_icount',
 				'label'			=> $icount_label,
 				'desc_tip'		=> 'true',
 				'description'	=> $ic_tooltip,
@@ -461,20 +463,18 @@ add_action( 'woocommerce_product_data_panels', 'rental_options_product_tab_conte
 
 
 function save_rental_option_field( $post_id ) {
-
-	$rental_option = isset( $_POST['gpayment_plan_option'] ) ? 'yes' : 'no';
-	update_post_meta( $post_id, 'gpayment_plan_option', $rental_option );
-
-	if ( isset( $_POST['gpayment_plan_option'] ) ) :
-		update_post_meta($post_id, 'gpayment_plan_option', sanitize_text_field($_POST['currency']));
-		update_post_meta($post_id, 'amount',               sanitize_text_field($_POST['amount']));
-		update_post_meta($post_id, 'trial',                sanitize_text_field($_POST['trial']));
-		update_post_meta($post_id, 'card_description',     sanitize_text_field($_POST['card_description']));
-		update_post_meta($post_id, 'interval',             sanitize_text_field($_POST['interval']));
-		update_post_meta($post_id, 'icount',               sanitize_text_field($_POST['icount']));
-		//update_post_meta( $post_id, 'gpayment_plan_option', sanitize_text_field( $_POST['gpayment_plan_option'] ) ); Recuperar precios y demas detalles para guardar en wp
+	if ( isset( $_POST['gpayment_plan_option']) && isset($_POST['_currency'])
+	 		 && isset($_POST['_amount']) && isset($_POST['_trial']) && isset($_POST['_card_description'])
+			  		&& isset($_POST['_interval']) && isset($_POST['_icount'])) :
+		update_post_meta($post_id, 'gpayment_plan_option', sanitize_text_field($_POST['gpayment_plan_option']));
+		update_post_meta($post_id, '_currency', sanitize_text_field($_POST['_currency']));
+		update_post_meta($post_id, '_amount', sanitize_text_field($_POST['_amount']));
+		update_post_meta($post_id, '_trial', sanitize_text_field($_POST['_trial']));
+		update_post_meta($post_id, '_card_description', sanitize_text_field($_POST['_card_description']));
+		update_post_meta($post_id, '_interval', sanitize_text_field($_POST['_interval']));
+		update_post_meta($post_id, '_icount', sanitize_text_field($_POST['_icount']));
+		//update_post_meta( $post_id, 'gpayment_plan_option', sanitize_text_field( $_POST['gpayment_plan_option'] ) );
 	endif;
-
 }
 add_action( 'woocommerce_process_product_meta_simple_rental', 'save_rental_option_field'  );
 add_action( 'woocommerce_process_product_meta_variable_rental', 'save_rental_option_field'  );
@@ -489,4 +489,10 @@ function hide_attributes_data_panel( $tabs) {
 
 }
 add_filter( 'woocommerce_product_data_tabs', 'hide_attributes_data_panel' );
+/*
+***************************************************************************************************************************************************
+***************************************************************************************************************************************************
+*/
+
+
 ?>
