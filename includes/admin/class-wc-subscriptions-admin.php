@@ -176,7 +176,7 @@ class WC_Subscriptions_Admin {
 	 */
 	public static function add_subscription_products_to_select( $product_types ) {
 
-		$product_types['subscription']          = __( 'Simple subscription', 'woocommerce-subscriptions' );
+		$product_types['subscription']          = __( '4Geeks plans', 'woocommerce-subscriptions' );
 		$product_types['variable-subscription'] = __( 'Variable subscription', 'woocommerce-subscriptions' );
 
 		return $product_types;
@@ -190,6 +190,133 @@ class WC_Subscriptions_Admin {
 	public static function subscription_pricing_fields() {
 		global $post;
 
+		$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
+
+		if (!$fp = fopen($dest_name."auth.txt", "r")){
+			echo "The file can't be opened";
+		}
+		$file = $dest_name."auth.txt";
+		$fp = fopen($file, "r");
+		$contents = fread($fp, filesize($file));
+		fclose($fp);
+
+		$credentials = explode(" ", $contents);
+
+		$Client_Id = trim($credentials[0]);
+		$Client_Secret = trim($credentials[1]);
+
+		$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
+
+		$data_to_send = array("grant_type"=>"client_credentials",
+		 					  "client_id" => $Client_Id,
+		 					  "client_secret" => $Client_Secret
+		 				);
+		$response_token = wp_remote_post( $api_auth_url, array(
+		 		'method' => 'POST',
+		 		'timeout' => 90,
+		 		'blocking' => true,
+		 		'headers' => array('content-type' => 'application/json'),
+		 		'body' => json_encode($data_to_send, true)
+		 	) );
+
+
+		$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
+
+		if($api_token != '' && $api_token != NULL && $api_token != 'undefined'){
+			$api_plan_url = 'https://api.payments.4geeks.io/v1/plans/mine';
+			$response_plan = wp_remote_get($api_plan_url, array('headers' => 'authorization: bearer ' . $api_token));
+
+			$plans =  json_decode(wp_remote_retrieve_body($response_plan),true);
+		}else{
+			echo "No";
+		}
+		$i = 0;
+		$options[''] = __( 'Seleccione un valor', 'woocommerce'); // default value
+
+		foreach($plans as $key => $opt){
+			$options[]  = $opt['information']['name'];
+		}
+		?><div id='rental_options' class='panel woocommerce_options_panel'><?php
+			?><div class='options_group'><?php
+				if ($mofile != '-es_CR.mo'){
+					$currency_label = __('Currency: ','woocommerce');
+					$amout_label = __('Amount: ','woocommerce');
+					$trial_label = __('Time trial: ','woocommerce');
+					$c_descrip_label = __('Card Description: ','woocommerce');
+					$interval_label = __('Interval: ','woocommerce');
+					$icount_label = __('Count: ','woocommerce');
+
+					$cu_tooltip = __( 'Currency', 'woocommerce' );
+					$cc_tooltip = __('Description on credit card customer balance', 'woocommerce' );
+					$tr_tooltip = __( 'Days of free use', 'woocommerce' );
+					$in_tooltip = __( 'Frecuency of charges', 'woocommerce' );
+					$ic_tooltip = __( 'Months', 'woocommerce' );
+					$am_tooltip = __( 'Amount', 'woocommerce' );
+				}else{
+					$currency_label = __('Moneda: ','woocommerce');
+					$amout_label = __('Precio: ','woocommerce');
+					$trial_label = __('Prueba Gratuita: ','woocommerce');
+					$c_descrip_label = __('Descripcion Tarjeta: ','woocommerce');
+					$interval_label = __('Intérvalo: ','woocommerce');
+					$icount_label = __('Meses: ','woocommerce');
+
+					$cu_tooltip = __( 'Moneda en la cual se haran los rebajos', 'woocommerce' );
+					$cc_tooltip = __( 'Descripcion para el estado de cuenta de la tarjeta del cliete', 'woocommerce' );
+					$tr_tooltip = __( 'Numero de dias en las cuales se le brindara al usuario un trial', 'woocommerce' );
+					$in_tooltip = __( 'Frecuenca de rebajos', 'woocommerce' );
+					$ic_tooltip = __( 'Meses', 'woocommerce' );
+					$am_tooltip = __( 'Monto', 'woocommerce' );
+
+				}
+
+
+				?>
+					<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+					<script type="text/javascript">
+					var plansJS = new Array();
+
+					<?php
+						for ($i = 0; $i < count($plans); $i++){
+							?>
+								plansJS[<?php echo $i ?>] = <?php echo json_encode($plans[$i]);?>;
+							<?php
+						}
+					?>
+
+					obj = plansJS;
+
+					jQuery(document).ready(function(){
+
+						$('#gpayment_plan_option').change(function(){
+
+							var param = $('#gpayment_plan_option').val();
+
+							if (param == ''){
+								$("#_currency").val('');
+								$("#_amount").val('');
+								$("#_trial").val('');
+								$("#_card_description").val('');
+								$("#_interval").val('');
+								$("#_icount").val('');
+							}else{
+								$("#_currency").val(obj[param].information.currency);
+								$("#_amount").val(obj[param].information.amount);
+								$("#_trial").val(obj[param].information.trial_period_days);
+								$("#_card_description").val(obj[param].information.credit_card_description);
+								$("#_interval").val(obj[param].information.interval);
+								$("#_icount").val(obj[param].information.interval_count);
+							}
+						});
+					});
+					</script>
+
+				<?php
+
+
+			?></div>
+		</div><?php
+
+/********************************************************************************************************************************************************************/
 		$chosen_price        = get_post_meta( $post->ID, '_subscription_price', true );
 		$chosen_interval     = get_post_meta( $post->ID, '_subscription_period_interval', true );
 		$chosen_trial_length = WC_Subscriptions_Product::get_trial_length( $post->ID );
@@ -206,11 +333,68 @@ class WC_Subscriptions_Admin {
 
 		echo '<div class="options_group subscription_pricing show_if_subscription">';
 
+		woocommerce_wp_select(
+			array(
+			'id'  	  => 'gpayment_plan_option',
+			'label'   => __('Planes 4GP Disponibles', 'woocommerce'),
+			'options' => $options,
+			)
+		);
+		woocommerce_wp_text_input( array(
+			'id'			=> '_currency',
+			'label'			=> $currency_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $cu_tooltip,
+			'type' 			=> 'text',
+		) );
+		woocommerce_wp_text_input( array(
+			'id'			=> '_amount',
+			'label'			=> $amout_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $am_tooltip,
+			'type' 			=> 'text',
+		) );
+		woocommerce_wp_text_input( array(
+			'id'			=> '_trial',
+			'label'			=> $trial_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $tr_tooltip,
+			'type' 			=> 'text',
+		) );
+		woocommerce_wp_text_input( array(
+			'id'			=> '_card_description',
+			'label'			=> $c_descrip_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $cc_tooltip,
+			'type' 			=> 'text',
+		) );
+		woocommerce_wp_text_input( array(
+			'id'			=> '_interval',
+			'label'			=> $interval_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $in_tooltip,
+			'type' 			=> 'text',
+		) );
+		woocommerce_wp_text_input( array(
+			'id'			=> '_icount',
+			'label'			=> $icount_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $ic_tooltip,
+			'type' 			=> 'text',
+		) );
 		// Subscription Price, Interval and Period
-		?><p class="form-field _subscription_price_fields _subscription_price_field">
-			<label for="_subscription_price"><?php printf( esc_html__( 'Subscription price (%s)', 'woocommerce-subscriptions' ), esc_html( get_woocommerce_currency_symbol() ) ); ?></label>
+		/*?><p class="form-field _subscription_price_fields _subscription_price_field">
+			<label for="_subscription_price"><?php
+				printf( esc_html__( 'Subscription price (%s)', 'woocommerce-subscriptions' ), esc_html( get_woocommerce_currency_symbol() ) );
+			?></label>
 			<span class="wrap">
-				<input type="text" id="_subscription_price" name="_subscription_price" class="wc_input_price wc_input_subscription_price" placeholder="<?php echo esc_attr_x( 'e.g. 5.90', 'example price', 'woocommerce-subscriptions' ); ?>" step="any" min="0" value="<?php echo esc_attr( wc_format_localized_price( $chosen_price ) ); ?>" />
+
+				<input type="text" id="_subscription_price" name="_subscription_price" class="wc_input_price wc_input_subscription_price" placeholder="<?php
+				 echo esc_attr_x( 'e.g. 5.90', 'example price', 'woocommerce-subscriptions' );
+				 ?>" step="any" min="0" value="<?php
+				  echo esc_attr( wc_format_localized_price( $chosen_price ) );
+				  ?>" />
+
 				<label for="_subscription_period_interval" class="wcs_hidden_label"><?php esc_html_e( 'Subscription interval', 'woocommerce-subscriptions' ); ?></label>
 				<select id="_subscription_period_interval" name="_subscription_period_interval" class="wc_input_subscription_period_interval">
 				<?php foreach ( wcs_get_subscription_period_interval_strings() as $value => $label ) { ?>
@@ -225,10 +409,12 @@ class WC_Subscriptions_Admin {
 				</select>
 			</span>
 			<?php echo wcs_help_tip( $price_tooltip ); ?>
-		</p><?php
+		</p>
+		<?php
+		*/
 
 		// Subscription Length
-		woocommerce_wp_select( array(
+		/*woocommerce_wp_select( array(
 			'id'          => '_subscription_length',
 			'class'       => 'wc_input_subscription_length select short',
 			'label'       => __( 'Expire after', 'woocommerce-subscriptions' ),
@@ -253,10 +439,10 @@ class WC_Subscriptions_Admin {
 				'step' => 'any',
 				'min'  => '0',
 			),
-		) );
+		) );*/
 
 		// Trial Length
-		?><p class="form-field _subscription_trial_length_field">
+		/*?><p class="form-field _subscription_trial_length_field">
 			<label for="_subscription_trial_length"><?php esc_html_e( 'Free trial', 'woocommerce-subscriptions' ); ?></label>
 			<span class="wrap">
 				<input type="text" id="_subscription_trial_length" name="_subscription_trial_length" class="wc_input_subscription_trial_length" value="<?php echo esc_attr( $chosen_trial_length ); ?>" />
@@ -268,7 +454,9 @@ class WC_Subscriptions_Admin {
 				</select>
 			</span>
 			<?php echo wcs_help_tip( $trial_tooltip ); ?>
-		</p><?php
+		</p>
+		<?php
+		*/
 
 		do_action( 'woocommerce_subscriptions_product_options_pricing' );
 

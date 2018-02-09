@@ -287,7 +287,7 @@ add_filter( 'woocommerce_product_data_tabs', 'custom_product_tabs' );
 
 
 
-function rental_options_product_tab_content() {
+/*function rental_options_product_tab_content() {
 	global $post;
 
 	$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
@@ -463,10 +463,10 @@ function rental_options_product_tab_content() {
 		?></div>
 	</div><?php
 }
-add_action( 'woocommerce_product_data_panels', 'rental_options_product_tab_content' );
+add_action( 'woocommerce_product_data_panels', 'rental_options_product_tab_content' );*/
 
 
-function save_rental_option_field( $post_id ) {
+/*function save_rental_option_field( $post_id ) {
 	global $wpdb;
 	$plan_option = isset( $_POST['gpayment_plan_option'] ) ? 'yes' : 'no';
 	update_post_meta( $post_id, 'gpayment_plan_option', $plan_option );
@@ -480,6 +480,17 @@ function save_rental_option_field( $post_id ) {
 		update_post_meta($post_id, '_card_description', sanitize_text_field($_POST['_card_description']));
 		update_post_meta($post_id, '_interval', sanitize_text_field($_POST['_interval']));
 		update_post_meta($post_id, '_icount', sanitize_text_field($_POST['_icount']));
+		update_post_meta($post_id, '_enable_renta_option',	'no');
+		update_post_meta($post_id, '_subscription_payment_sync_date',	'0');
+		update_post_meta($post_id, '_subscription_price',	sanitize_text_field($_POST['_amount']));
+		update_post_meta($post_id, '_subscription_trial_length',	sanitize_text_field($_POST['_trial']));
+		update_post_meta($post_id, '_subscription_sign_up_fee',	'10');
+		update_post_meta($post_id, '_subscription_period',	sanitize_text_field($_POST['_interval']));
+		update_post_meta($post_id, '_subscription_period_interval',	sanitize_text_field($_POST['_icount']));
+		update_post_meta($post_id, '_subscription_length',	'4');
+		update_post_meta($post_id, '_subscription_trial_period',	'day');
+		update_post_meta($post_id, '_subscription_limit',	'no');
+		update_post_meta($post_id, '_subscription_one_time_shipping',	'no');
 		//update_post_meta( $post_id, 'gpayment_plan_option', sanitize_text_field( $_POST['gpayment_plan_option'] ) );
 	endif;
 	$table = 'wp_term_relationships';
@@ -487,7 +498,7 @@ function save_rental_option_field( $post_id ) {
 	$where = 'object_id = '.$post_id;
 
 	$wpdb->update($table, $data, $where);
-}
+}*/
 /*
 _enable_renta_option	no
 _subscription_payment_sync_date	0
