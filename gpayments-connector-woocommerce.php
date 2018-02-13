@@ -128,15 +128,14 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 
 	// Response handled for payment gateway
 	public function process_payment( $order_id ) {
-		global $woocommerce;
+		global $woocommerce, $wpdb;
 
 		$customer_order = new WC_Order( $order_id );
 
 		//API Auth URL
 		$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
-
 		//API base URL
-		$api_url = 'https://api.payments.4geeks.io/v1/charges/simple/create/';
+		$api_url      = 'https://api.payments.4geeks.io/v1/charges/simple/create/';
 
 		$data_to_send = array("grant_type" => "client_credentials",
 								"client_id" => $this->client_id,
@@ -155,29 +154,29 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 
 		$api_token = json_decode( wp_remote_retrieve_body($response_token), true)['access_token'];
 
-			// This is where the fun stuff begins
-			if($this->entity_description == ''){
-				$this->entity_description = 'Pago a traves de 4GP';
-			}
-			$payload = array(
-				"amount"             	=> $customer_order->get_total(),
-				"description"           => $this->charge_description,
-				"entity_description"    => strtoupper($this->entity_description),
-				"currency"           	=> get_woocommerce_currency(),
-				"credit_card_number"    => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
-				"credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
-				"exp_month" 			=> substr($_POST['wc-4gpayments-card-expiry'], 0, 2),
-				"exp_year" 				=> "20" . substr($_POST['wc-4gpayments-card-expiry'], -2),
+		// This is where the fun stuff begins
+		if($this->entity_description == ''){
+			$this->entity_description = 'Pago a traves de 4GP';
+		}
+		$payload = array(
+			"amount"             	=> $customer_order->get_total(),
+			"description"           => $this->charge_description,
+			"entity_description"    => strtoupper($this->entity_description),
+			"currency"           	=> get_woocommerce_currency(),
+			"credit_card_number"    => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
+			"credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
+			"exp_month" 			=> substr($_POST['wc-4gpayments-card-expiry'], 0, 2),
+			"exp_year" 				=> "20" . substr($_POST['wc-4gpayments-card-expiry'], -2),
 
-			);
+		);
 
 		// Send this payload to 4GP for processing
 		$response = wp_remote_post( $api_url, array(
 			'method'    => 'POST',
 			'body'      => json_encode($payload, true),
 			'timeout'   => 90,
-			'blocking' => true,
-			'headers' => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
+			'blocking'  => true,
+			'headers'   => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
 		 ) );
 
 		 $JsonResponse = json_decode($response['body']);
@@ -243,7 +242,7 @@ function register_simple_rental_product_type() {
 }
 add_action( 'plugins_loaded', 'register_simple_rental_product_type' );
 
-function add_simple_rental_product( $types ){
+/*function add_simple_rental_product( $types ){
 
 	// Key should be exactly the same as in the class
 	$types[ 'simple_rental' ] = __( '4G Planes' );
@@ -251,7 +250,7 @@ function add_simple_rental_product( $types ){
 	return $types;
 
 }
-add_filter( 'product_type_selector', 'add_simple_rental_product' );
+add_filter( 'product_type_selector', 'add_simple_rental_product' );*/
 
 
 function simple_rental_custom_js() {
@@ -272,7 +271,7 @@ add_action( 'admin_footer', 'simple_rental_custom_js' );
 
 
 
-function custom_product_tabs( $tabs) {
+/*function custom_product_tabs( $tabs) {
 
 	$tabs['rental'] = array(
 		'label'		=> __( '4G Planes', 'woocommerce' ),
@@ -283,7 +282,7 @@ function custom_product_tabs( $tabs) {
 	return $tabs;
 
 }
-add_filter( 'woocommerce_product_data_tabs', 'custom_product_tabs' );
+add_filter( 'woocommerce_product_data_tabs', 'custom_product_tabs' );*/
 
 
 
@@ -293,7 +292,6 @@ add_filter( 'woocommerce_product_data_tabs', 'custom_product_tabs' );
 	$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
 
 	if (!$fp = fopen($dest_name."auth.txt", "r")){
-		echo "The file can't be opened";
 	}
 	$file = $dest_name."auth.txt";
 	$fp = fopen($file, "r");
@@ -659,7 +657,7 @@ class WC_Subscriptions {
 
 		register_deactivation_hook( __FILE__, __CLASS__ . '::deactivate_woocommerce_subscriptions' );
 
-		// Override the WC default "Add to Cart" text to "Sign Up Now" (in various places/templates)
+		// Override the WC default "Add to Cart" text to "Subscribirse" (in various places/templates)
 		add_filter( 'woocommerce_order_button_text', __CLASS__ . '::order_button_text' );
 		add_action( 'woocommerce_subscription_add_to_cart', __CLASS__ . '::subscription_add_to_cart', 30 );
 		add_action( 'woocommerce_variable-subscription_add_to_cart', __CLASS__ . '::variable_subscription_add_to_cart', 30 );
@@ -949,7 +947,7 @@ class WC_Subscriptions {
 
 	/**
 	 * For a smoother sign up process, tell WooCommerce to redirect the shopper immediately to
-	 * the checkout page after she clicks the "Sign Up Now" button
+	 * the checkout page after she clicks the "Subscribirse" button
 	 *
 	 * Only enabled if multiple checkout is not enabled.
 	 *
@@ -980,7 +978,7 @@ class WC_Subscriptions {
 	}
 
 	/**
-	 * Override the WooCommerce "Place Order" text with "Sign Up Now"
+	 * Override the WooCommerce "Place Order" text with "Subscribirse"
 	 *
 	 * @since 1.0
 	 */
@@ -988,7 +986,7 @@ class WC_Subscriptions {
 		global $product;
 
 		if ( WC_Subscriptions_Cart::cart_contains_subscription() ) {
-			$button_text = get_option( WC_Subscriptions_Admin::$option_prefix . '_order_button_text', __( 'Sign Up Now', 'woocommerce-subscriptions' ) );
+			$button_text = get_option( WC_Subscriptions_Admin::$option_prefix . '_order_button_text', __( 'Subscribirse', 'woocommerce-subscriptions' ) );
 		}
 
 		return $button_text;

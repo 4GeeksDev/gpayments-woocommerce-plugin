@@ -85,7 +85,7 @@ class WC_Subscriptions_Product {
 	}
 
 	/**
-	 * Override the WooCommerce "Add to Cart" text with "Sign Up Now".
+	 * Override the WooCommerce "Add to Cart" text with "Subscribirse".
 	 *
 	 * @since 1.0
 	 */
@@ -93,7 +93,7 @@ class WC_Subscriptions_Product {
 		global $product;
 
 		if ( self::is_subscription( $product ) || in_array( $product_type, array( 'subscription', 'subscription-variation' ) ) ) {
-			$button_text = get_option( WC_Subscriptions_Admin::$option_prefix . '_add_to_cart_button_text', __( 'Sign Up Now', 'woocommerce-subscriptions' ) );
+			$button_text = get_option( WC_Subscriptions_Admin::$option_prefix . '_add_to_cart_button_text', __( 'Subscribirse', 'woocommerce-subscriptions' ) );
 		}
 
 		return $button_text;

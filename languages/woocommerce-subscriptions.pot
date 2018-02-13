@@ -205,7 +205,7 @@ msgstr ""
 #: includes/admin/class-wc-subscriptions-admin.php:1037
 msgid ""
 "A product displays a button with the text \"Add to Cart\". By default, a "
-"subscription changes this to \"Sign Up Now\". You can customise the button "
+"subscription changes this to \"Subscribirse\". You can customise the button "
 "text for subscriptions here."
 msgstr ""
 
@@ -216,7 +216,7 @@ msgstr ""
 #: includes/class-wc-product-variable-subscription.php:63
 #: includes/class-wc-subscriptions-product.php:96
 #: woocommerce-subscriptions.php:490
-msgid "Sign Up Now"
+msgid "Subscribirse"
 msgstr ""
 
 #: includes/admin/class-wc-subscriptions-admin.php:1047
@@ -228,7 +228,7 @@ msgid ""
 "Use this field to customise the text displayed on the checkout button when "
 "an order contains a subscription. Normally the checkout submission button "
 "displays \"Place Order\". When the cart contains a subscription, this is "
-"changed to \"Sign Up Now\"."
+"changed to \"Subscribirse\"."
 msgstr ""
 
 #: includes/admin/class-wc-subscriptions-admin.php:1060

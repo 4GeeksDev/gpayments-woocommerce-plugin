@@ -176,8 +176,8 @@ class WC_Subscriptions_Admin {
 	 */
 	public static function add_subscription_products_to_select( $product_types ) {
 
-		$product_types['subscription']          = __( '4Geeks plans', 'woocommerce-subscriptions' );
-		$product_types['variable-subscription'] = __( 'Variable subscription', 'woocommerce-subscriptions' );
+		$product_types['subscription']          = __( '4Geeks Plans', 'woocommerce-subscriptions' );
+		//$product_types['variable-subscription'] = __( 'Variable subscription', 'woocommerce-subscriptions' );
 
 		return $product_types;
 	}
@@ -193,7 +193,7 @@ class WC_Subscriptions_Admin {
 		$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
 
 		if (!$fp = fopen($dest_name."auth.txt", "r")){
-			echo "The file can't be opened";
+			echo "The file can't be opened 196";
 		}
 		$file = $dest_name."auth.txt";
 		$fp = fopen($file, "r");
@@ -221,7 +221,6 @@ class WC_Subscriptions_Admin {
 
 
 		$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
-
 		if($api_token != '' && $api_token != NULL && $api_token != 'undefined'){
 			$api_plan_url = 'https://api.payments.4geeks.io/v1/plans/mine';
 			$response_plan = wp_remote_get($api_plan_url, array('headers' => 'authorization: bearer ' . $api_token));
@@ -230,7 +229,7 @@ class WC_Subscriptions_Admin {
 		}else{
 			echo "No";
 		}
-		$i = 0;
+
 		$options[''] = __( 'Seleccione un valor', 'woocommerce'); // default value
 
 		foreach($plans as $key => $opt){
@@ -242,9 +241,10 @@ class WC_Subscriptions_Admin {
 					$currency_label = __('Currency: ','woocommerce');
 					$amout_label = __('Amount: ','woocommerce');
 					$trial_label = __('Time trial: ','woocommerce');
+					$trial_days_label = __('Units: ','woocommerce');
 					$c_descrip_label = __('Card Description: ','woocommerce');
 					$interval_label = __('Interval: ','woocommerce');
-					$icount_label = __('Count: ','woocommerce');
+					$icount_label = __('Units: ','woocommerce');
 
 					$cu_tooltip = __( 'Currency', 'woocommerce' );
 					$cc_tooltip = __('Description on credit card customer balance', 'woocommerce' );
@@ -255,10 +255,11 @@ class WC_Subscriptions_Admin {
 				}else{
 					$currency_label = __('Moneda: ','woocommerce');
 					$amout_label = __('Precio: ','woocommerce');
-					$trial_label = __('Prueba Gratuita: ','woocommerce');
+					$trial_label = __('Unidades: ','woocommerce');
+					$trial_days_label = __('Dias gratis: ','woocommerce');
 					$c_descrip_label = __('Descripcion Tarjeta: ','woocommerce');
 					$interval_label = __('Intérvalo: ','woocommerce');
-					$icount_label = __('Meses: ','woocommerce');
+					$icount_label = __('Unidades: ','woocommerce');
 
 					$cu_tooltip = __( 'Moneda en la cual se haran los rebajos', 'woocommerce' );
 					$cc_tooltip = __( 'Descripcion para el estado de cuenta de la tarjeta del cliete', 'woocommerce' );
@@ -290,29 +291,28 @@ class WC_Subscriptions_Admin {
 						$('#gpayment_plan_option').change(function(){
 
 							var param = $('#gpayment_plan_option').val();
-
+							var unit = "days";
 							if (param == ''){
 								$("#_currency").val('');
-								$("#_amount").val('');
-								$("#_trial").val('');
+								$("#_subscription_price").val('');
+								$("#_subscription_trial_length").val('');
+								$("#_subscription_trial_period").val('');
 								$("#_card_description").val('');
-								$("#_interval").val('');
-								$("#_icount").val('');
+								$("#_subscription_period").val('');
+								$("#_subscription_period_interval").val('');
 							}else{
 								$("#_currency").val(obj[param].information.currency);
-								$("#_amount").val(obj[param].information.amount);
-								$("#_trial").val(obj[param].information.trial_period_days);
+								$("#_subscription_price").val(obj[param].information.amount);
+								$("#_subscription_trial_length").val(obj[param].information.trial_period_days);
+								$("#_subscription_trial_period").val("days");
 								$("#_card_description").val(obj[param].information.credit_card_description);
-								$("#_interval").val(obj[param].information.interval);
-								$("#_icount").val(obj[param].information.interval_count);
+								$("#_subscription_period").val(obj[param].information.interval);
+								$("#_subscription_period_interval").val(obj[param].information.interval_count);
 							}
 						});
 					});
 					</script>
-
 				<?php
-
-
 			?></div>
 		</div><?php
 
@@ -340,48 +340,56 @@ class WC_Subscriptions_Admin {
 			'options' => $options,
 			)
 		);
-		woocommerce_wp_text_input( array(
+		woocommerce_wp_text_input( array(//1
 			'id'			=> '_currency',
 			'label'			=> $currency_label,
 			'desc_tip'		=> 'true',
 			'description'	=> $cu_tooltip,
 			'type' 			=> 'text',
 		) );
-		woocommerce_wp_text_input( array(
-			'id'			=> '_amount',
+		woocommerce_wp_text_input( array(//2
+			'id'			=> '_subscription_price',
 			'label'			=> $amout_label,
 			'desc_tip'		=> 'true',
 			'description'	=> $am_tooltip,
 			'type' 			=> 'text',
 		) );
-		woocommerce_wp_text_input( array(
-			'id'			=> '_trial',
+		woocommerce_wp_text_input( array(//3
+			'id'			=> '_subscription_trial_length',
 			'label'			=> $trial_label,
 			'desc_tip'		=> 'true',
 			'description'	=> $tr_tooltip,
 			'type' 			=> 'text',
 		) );
-		woocommerce_wp_text_input( array(
+		woocommerce_wp_text_input( array(//4
+			'id'			=> '_subscription_trial_period',
+			'label'			=> $trial_days_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $ic_tooltip,
+			'type' 			=> 'text',
+		) );
+		woocommerce_wp_text_input( array(//5
 			'id'			=> '_card_description',
 			'label'			=> $c_descrip_label,
 			'desc_tip'		=> 'true',
 			'description'	=> $cc_tooltip,
 			'type' 			=> 'text',
 		) );
-		woocommerce_wp_text_input( array(
-			'id'			=> '_interval',
+		woocommerce_wp_text_input( array(//6
+			'id'			=> '_subscription_period_interval',
 			'label'			=> $interval_label,
 			'desc_tip'		=> 'true',
 			'description'	=> $in_tooltip,
 			'type' 			=> 'text',
 		) );
-		woocommerce_wp_text_input( array(
-			'id'			=> '_icount',
+		woocommerce_wp_text_input( array(//7
+			'id'			=> '_subscription_period',
 			'label'			=> $icount_label,
 			'desc_tip'		=> 'true',
 			'description'	=> $ic_tooltip,
 			'type' 			=> 'text',
 		) );
+
 		// Subscription Price, Interval and Period
 		/*?><p class="form-field _subscription_price_fields _subscription_price_field">
 			<label for="_subscription_price"><?php
@@ -389,7 +397,7 @@ class WC_Subscriptions_Admin {
 			?></label>
 			<span class="wrap">
 
-				<input type="text" id="_subscription_price" name="_subscription_price" class="wc_input_price wc_input_subscription_price" placeholder="<?php
+				/*<input type="text" id="_subscription_price" name="_subscription_price" class="wc_input_price wc_input_subscription_price" placeholder="<?php
 				 echo esc_attr_x( 'e.g. 5.90', 'example price', 'woocommerce-subscriptions' );
 				 ?>" step="any" min="0" value="<?php
 				  echo esc_attr( wc_format_localized_price( $chosen_price ) );
@@ -459,6 +467,8 @@ class WC_Subscriptions_Admin {
 		*/
 
 		do_action( 'woocommerce_subscriptions_product_options_pricing' );
+
+		//remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_price', 10 );
 
 		wp_nonce_field( 'wcs_subscription_meta', '_wcsnonce' );
 
@@ -548,7 +558,6 @@ class WC_Subscriptions_Admin {
 			</optgroup>
 		<?php endif;
 	}
-
 	/**
 	 * Save meta data for simple subscription product type when the "Edit Product" form is submitted.
 	 *
@@ -556,8 +565,71 @@ class WC_Subscriptions_Admin {
 	 * @return array Array of Product types & their labels, including the Subscription product type.
 	 * @since 1.0
 	 */
-	public static function save_subscription_meta( $post_id ) {
+	public static function save_subscription_meta($post_id){
+		global $wpdb;
 
+		if (is_user_logged_in()){
+				$cu = wp_get_current_user();
+
+				$total_counts = $wpdb->get_row("SELECT count(*) as total FROM $wpdb->wp_postmeta WHERE meta_value = " . $cu->user_email. " and and meta_key = '_Customer4Geeks'");
+				echo var_dump($total_counts);
+				if ($total_counts >= 1){
+					$Customer4Geeks = $wpdb->get_row( "SELECT meta_value FROM $wpdb->wp_postmeta WHERE meta_key = '_Customer4Geeks' limit 1");
+				}else{
+					/*$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
+					@chmod($dest_name, 0777);
+					if (!$fp = fopen($dest_name."auth.txt", "r")){
+						//echo "The file can't be opened 582";
+					}
+					$file = $dest_name."auth.txt";
+					$fp = fopen($file, "r");
+					$contents = fread($fp, filesize($file));
+					$fclose($fp);
+					$credentials = explode(" ", $contents);
+					$Client_Id = trim($credentials[0]);
+					*/
+
+					$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
+					$data_to_send = array("grant_type"=>"client_credentials",
+										  "client_id" => "M9nHziaFc1bp1RfHqErgfbpTUTUu8GIstcicnCEg",
+										  "client_secret" => "6eDaNxTOhsAxIjlK618kJ4eddTfVioWAEh5WAgCG8ImBlXMiTRpcXPfz8qs3EKeK9ngWoSRKwVxocco6TveW5iWx6J3s9ytoDCyPqrR3lniqy4WnlW4fRIHQIY7wMOH5"
+									);
+					$response_token = wp_remote_post( $api_auth_url, array(
+							'method' => 'POST',
+							'timeout' => 90,
+							'blocking' => true,
+							'headers' => array('content-type' => 'application/json'),
+							'body' => json_encode($data_to_send, true),
+						) );
+					$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
+					echo var_dump($api_token);
+
+					$api_custmr_url = 'https://api.payments.4geeks.io/v1/accounts/customers/';
+					$data_to_post = array("name"							 => $cu->user_firstname.' '.$cu->user_lastname,
+										  "email" 							 => $cu->user_email,
+										  "currency" 						 => 'dls',//$_POST['_currency'],
+										  "credit_card_number" 				 => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
+										  "credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
+										  "exp_month" 						 => substr($_POST['wc-4gpayments-card-expiry'], 0, 2),
+										  "exp_year" 						 => "20" . substr($_POST['wc-4gpayments-card-expiry'], -2),
+									);
+					echo var_dump($data_to_post);
+					$response = wp_remote_post( $api_custmr_url, array(
+							'method'   => 'POST',
+							'body'     => json_encode($data_to_post, true),
+							'timeout'  => 90,
+							'blocking' => true,
+							'headers'  => array('headers' => 'authorization: bearer ' . $api_token),
+						) );
+					echo var_dump($response);
+
+					$JsonResponse = json_decode($response['body']);
+					$Customer4Geeks = $JsonResponse ->{'key'};
+					//$Customer4Geeks = json_decode(wp_remote_retrieve_body($response), true);
+					echo var_dump($JsonResponse) . 'Customer4Geeks';
+
+				}
+		}
 		if ( empty( $_POST['_wcsnonce'] ) || ! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' ) || false === self::is_subscription_product_save_request( $post_id, apply_filters( 'woocommerce_subscription_product_types', array( WC_Subscriptions::$name ) ) ) ) {
 			return;
 		}
@@ -592,16 +664,24 @@ class WC_Subscriptions_Admin {
 
 		update_post_meta( $post_id, '_price', stripslashes( $price ) );
 
-		// Make sure trial period is within allowable range
-		$subscription_ranges = wcs_get_subscription_ranges();
-
-		$max_trial_length = count( $subscription_ranges[ $_POST['_subscription_trial_period'] ] ) - 1;
 
 		$_POST['_subscription_trial_length'] = absint( $_POST['_subscription_trial_length'] );
 
-		if ( $_POST['_subscription_trial_length'] > $max_trial_length ) {
-			$_POST['_subscription_trial_length'] = $max_trial_length;
-		}
+		//4geeks fields
+		update_post_meta( $post_id, 'gpayment_plan_option', $_POST['gpayment_plan_option']);
+		update_post_meta( $post_id, '_currency', $_POST['_currency']);
+		update_post_meta( $post_id, '_card_description', $_POST['_card_description']);
+		update_post_meta( $post_id, '_subscription_trial_length', $_POST['_subscription_trial_length']);
+		update_post_meta( $post_id, '_Customer4Geeks', $Customer4Geeks);
+
+		// Make sure trial period is within allowable range
+		//$subscription_ranges = wcs_get_subscription_ranges();
+
+		//$max_trial_length = count( $subscription_ranges[ $_POST['_subscription_trial_period'] ] ) - 1;
+
+		//$_POST['_subscription_trial_length'] = $max_trial_length;
+		//if ( $_POST['_subscription_trial_length'] > $max_trial_length ) {
+		//}
 
 		update_post_meta( $post_id, '_subscription_trial_length', $_POST['_subscription_trial_length'] );
 
@@ -1222,22 +1302,22 @@ class WC_Subscriptions_Admin {
 
 			array(
 				'name'     => __( 'Add to Cart Button Text', 'woocommerce-subscriptions' ),
-				'desc'     => __( 'A product displays a button with the text "Add to Cart". By default, a subscription changes this to "Sign Up Now". You can customise the button text for subscriptions here.', 'woocommerce-subscriptions' ),
+				'desc'     => __( 'A product displays a button with the text "Add to Cart". By default, a subscription changes this to "Subscribirse". You can customise the button text for subscriptions here.', 'woocommerce-subscriptions' ),
 				'tip'      => '',
 				'id'       => self::$option_prefix . '_add_to_cart_button_text',
 				'css'      => 'min-width:150px;',
-				'default'  => __( 'Sign Up Now', 'woocommerce-subscriptions' ),
+				'default'  => __( 'Subscribirse', 'woocommerce-subscriptions' ),
 				'type'     => 'text',
 				'desc_tip' => true,
 			),
 
 			array(
 				'name'     => __( 'Place Order Button Text', 'woocommerce-subscriptions' ),
-				'desc'     => __( 'Use this field to customise the text displayed on the checkout button when an order contains a subscription. Normally the checkout submission button displays "Place Order". When the cart contains a subscription, this is changed to "Sign Up Now".', 'woocommerce-subscriptions' ),
+				'desc'     => __( 'Use this field to customise the text displayed on the checkout button when an order contains a subscription. Normally the checkout submission button displays "Place Order". When the cart contains a subscription, this is changed to "Subscribirse".', 'woocommerce-subscriptions' ),
 				'tip'      => '',
 				'id'       => self::$option_prefix . '_order_button_text',
 				'css'      => 'min-width:150px;',
-				'default'  => __( 'Sign Up Now', 'woocommerce-subscriptions' ),
+				'default'  => __( 'Subscribirse', 'woocommerce-subscriptions' ),
 				'type'     => 'text',
 				'desc_tip' => true,
 			),
