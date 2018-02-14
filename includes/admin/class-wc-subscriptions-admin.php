@@ -245,6 +245,7 @@ class WC_Subscriptions_Admin {
 					$c_descrip_label = __('Card Description: ','woocommerce');
 					$interval_label = __('Interval: ','woocommerce');
 					$icount_label = __('Units: ','woocommerce');
+					$PlanId_label = __('Plan Id: ','woocommerce');
 
 					$cu_tooltip = __( 'Currency', 'woocommerce' );
 					$cc_tooltip = __('Description on credit card customer balance', 'woocommerce' );
@@ -260,6 +261,7 @@ class WC_Subscriptions_Admin {
 					$c_descrip_label = __('Descripcion Tarjeta: ','woocommerce');
 					$interval_label = __('Intérvalo: ','woocommerce');
 					$icount_label = __('Unidades: ','woocommerce');
+					$PlanId_label = __('Plan Id: ','woocommerce');
 
 					$cu_tooltip = __( 'Moneda en la cual se haran los rebajos', 'woocommerce' );
 					$cc_tooltip = __( 'Descripcion para el estado de cuenta de la tarjeta del cliete', 'woocommerce' );
@@ -300,6 +302,7 @@ class WC_Subscriptions_Admin {
 								$("#_card_description").val('');
 								$("#_subscription_period").val('');
 								$("#_subscription_period_interval").val('');
+								$("#_Plan_Id").val('');
 							}else{
 								$("#_currency").val(obj[param].information.currency);
 								$("#_subscription_price").val(obj[param].information.amount);
@@ -308,6 +311,7 @@ class WC_Subscriptions_Admin {
 								$("#_card_description").val(obj[param].information.credit_card_description);
 								$("#_subscription_period").val(obj[param].information.interval);
 								$("#_subscription_period_interval").val(obj[param].information.interval_count);
+								$("#_Plan_Id").val(obj[param].key);
 							}
 						});
 					});
@@ -389,7 +393,13 @@ class WC_Subscriptions_Admin {
 			'description'	=> $ic_tooltip,
 			'type' 			=> 'text',
 		) );
-
+		woocommerce_wp_text_input( array(//8
+			'id'			=> '_Plan_Id',
+			'label'			=> $PlanId_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $ic_tooltip,
+			'type' 			=> 'text',
+		) );
 		// Subscription Price, Interval and Period
 		/*?><p class="form-field _subscription_price_fields _subscription_price_field">
 			<label for="_subscription_price"><?php
@@ -572,10 +582,12 @@ class WC_Subscriptions_Admin {
 				$cu = wp_get_current_user();
 
 				$total_counts = $wpdb->get_row("SELECT count(*) as total FROM $wpdb->wp_postmeta WHERE meta_value = " . $cu->user_email. " and and meta_key = '_Customer4Geeks'");
-				echo var_dump($total_counts);
+				//echo var_dump($total_counts).' total_counts' . '<br>';
 				if ($total_counts >= 1){
+					//echo '577' . '<br>';
 					$Customer4Geeks = $wpdb->get_row( "SELECT meta_value FROM $wpdb->wp_postmeta WHERE meta_key = '_Customer4Geeks' limit 1");
 				}else{
+					//echo '580' . '<br>';
 					/*$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
 					@chmod($dest_name, 0777);
 					if (!$fp = fopen($dest_name."auth.txt", "r")){
@@ -602,34 +614,46 @@ class WC_Subscriptions_Admin {
 							'body' => json_encode($data_to_send, true),
 						) );
 					$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
-					echo var_dump($api_token);
+					//echo var_dump($api_token);
 
 					$api_custmr_url = 'https://api.payments.4geeks.io/v1/accounts/customers/';
-					$data_to_post = array("name"							 => $cu->user_firstname.' '.$cu->user_lastname,
+					$data_to_post = array("name"							 => $cu->user_firstname .' '. $cu->user_lastname,
 										  "email" 							 => $cu->user_email,
-										  "currency" 						 => 'dls',//$_POST['_currency'],
+										  "currency" 						 => 'dls',
 										  "credit_card_number" 				 => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
 										  "credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
 										  "exp_month" 						 => substr($_POST['wc-4gpayments-card-expiry'], 0, 2),
-										  "exp_year" 						 => "20" . substr($_POST['wc-4gpayments-card-expiry'], -2),
+										  "exp_year" 						 => "20" . substr($_POST['wc-4gpayments-card-expiry'], -2)
 									);
-					echo var_dump($data_to_post);
+					//echo var_dump($data_to_post);
 					$response = wp_remote_post( $api_custmr_url, array(
 							'method'   => 'POST',
 							'body'     => json_encode($data_to_post, true),
 							'timeout'  => 90,
 							'blocking' => true,
-							'headers'  => array('headers' => 'authorization: bearer ' . $api_token),
+							'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
 						) );
 					echo var_dump($response);
 
 					$JsonResponse = json_decode($response['body']);
 					$Customer4Geeks = $JsonResponse ->{'key'};
-					//$Customer4Geeks = json_decode(wp_remote_retrieve_body($response), true);
-					echo var_dump($JsonResponse) . 'Customer4Geeks';
+
+					echo var_dump($Customer4Geeks) . 'Customer4Geeks';
 
 				}
 		}
+
+		$api_subscr = "https://api.payments.4geeks.io/v1/plans/subscribe/";
+		$data_subscribe = array('customer_key'=>$Customer4Geeks,
+	  							'plan_key'=>$_POST['_Plan_Id']);
+		$post_subscription = wp_remote_post($api_subscr, array(
+			'method'   => 'POST',
+			'body'     => json_encode($data_subscribe, true),
+			'timeout'  => 90,
+			'blocking' => true,
+			'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
+		));
+
 		if ( empty( $_POST['_wcsnonce'] ) || ! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' ) || false === self::is_subscription_product_save_request( $post_id, apply_filters( 'woocommerce_subscription_product_types', array( WC_Subscriptions::$name ) ) ) ) {
 			return;
 		}
@@ -673,6 +697,7 @@ class WC_Subscriptions_Admin {
 		update_post_meta( $post_id, '_card_description', $_POST['_card_description']);
 		update_post_meta( $post_id, '_subscription_trial_length', $_POST['_subscription_trial_length']);
 		update_post_meta( $post_id, '_Customer4Geeks', $Customer4Geeks);
+		update_post_meta( $post_id, '_Plan_Id', $_POST['_Plan_Id']);
 
 		// Make sure trial period is within allowable range
 		//$subscription_ranges = wcs_get_subscription_ranges();
