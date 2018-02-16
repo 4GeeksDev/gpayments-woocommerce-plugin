@@ -218,20 +218,16 @@ class WC_Subscriptions_Admin {
 		 		'headers' => array('content-type' => 'application/json'),
 		 		'body' => json_encode($data_to_send, true)
 		 	) );
-
-
 		$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
+		//echo $api_token;
 		if($api_token != '' && $api_token != NULL && $api_token != 'undefined'){
 			$api_plan_url = 'https://api.payments.4geeks.io/v1/plans/mine';
 			$response_plan = wp_remote_get($api_plan_url, array('headers' => 'authorization: bearer ' . $api_token));
-
 			$plans =  json_decode(wp_remote_retrieve_body($response_plan),true);
 		}else{
-			echo "No";
+			echo "No api";
 		}
-
 		$options[''] = __( 'Seleccione un valor', 'woocommerce'); // default value
-
 		foreach($plans as $key => $opt){
 			$options[]  = $opt['information']['name'];
 		}
@@ -269,15 +265,11 @@ class WC_Subscriptions_Admin {
 					$in_tooltip = __( 'Frecuenca de rebajos', 'woocommerce' );
 					$ic_tooltip = __( 'Meses', 'woocommerce' );
 					$am_tooltip = __( 'Monto', 'woocommerce' );
-
 				}
-
-
 				?>
 					<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 					<script type="text/javascript">
 					var plansJS = new Array();
-
 					<?php
 						for ($i = 0; $i < count($plans); $i++){
 							?>
@@ -285,13 +277,9 @@ class WC_Subscriptions_Admin {
 							<?php
 						}
 					?>
-
 					obj = plansJS;
-
 					jQuery(document).ready(function(){
-
 						$('#gpayment_plan_option').change(function(){
-
 							var param = $('#gpayment_plan_option').val();
 							var unit = "days";
 							if (param == ''){
@@ -319,8 +307,6 @@ class WC_Subscriptions_Admin {
 				<?php
 			?></div>
 		</div><?php
-
-/********************************************************************************************************************************************************************/
 		$chosen_price        = get_post_meta( $post->ID, '_subscription_price', true );
 		$chosen_interval     = get_post_meta( $post->ID, '_subscription_period_interval', true );
 		$chosen_trial_length = WC_Subscriptions_Product::get_trial_length( $post->ID );
@@ -372,67 +358,8 @@ class WC_Subscriptions_Admin {
 			'description'	=> $ic_tooltip,
 			'type' 			=> 'text',
 		) );
-		woocommerce_wp_text_input( array(//5
-			'id'			=> '_card_description',
-			'label'			=> $c_descrip_label,
-			'desc_tip'		=> 'true',
-			'description'	=> $cc_tooltip,
-			'type' 			=> 'text',
-		) );
-		woocommerce_wp_text_input( array(//6
-			'id'			=> '_subscription_period_interval',
-			'label'			=> $interval_label,
-			'desc_tip'		=> 'true',
-			'description'	=> $in_tooltip,
-			'type' 			=> 'text',
-		) );
-		woocommerce_wp_text_input( array(//7
-			'id'			=> '_subscription_period',
-			'label'			=> $icount_label,
-			'desc_tip'		=> 'true',
-			'description'	=> $ic_tooltip,
-			'type' 			=> 'text',
-		) );
-		woocommerce_wp_text_input( array(//8
-			'id'			=> '_Plan_Id',
-			'label'			=> $PlanId_label,
-			'desc_tip'		=> 'true',
-			'description'	=> $ic_tooltip,
-			'type' 			=> 'text',
-		) );
-		// Subscription Price, Interval and Period
-		/*?><p class="form-field _subscription_price_fields _subscription_price_field">
-			<label for="_subscription_price"><?php
-				printf( esc_html__( 'Subscription price (%s)', 'woocommerce-subscriptions' ), esc_html( get_woocommerce_currency_symbol() ) );
-			?></label>
-			<span class="wrap">
-
-				/*<input type="text" id="_subscription_price" name="_subscription_price" class="wc_input_price wc_input_subscription_price" placeholder="<?php
-				 echo esc_attr_x( 'e.g. 5.90', 'example price', 'woocommerce-subscriptions' );
-				 ?>" step="any" min="0" value="<?php
-				  echo esc_attr( wc_format_localized_price( $chosen_price ) );
-				  ?>" />
-
-				<label for="_subscription_period_interval" class="wcs_hidden_label"><?php esc_html_e( 'Subscription interval', 'woocommerce-subscriptions' ); ?></label>
-				<select id="_subscription_period_interval" name="_subscription_period_interval" class="wc_input_subscription_period_interval">
-				<?php foreach ( wcs_get_subscription_period_interval_strings() as $value => $label ) { ?>
-					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $chosen_interval, true ) ?>><?php echo esc_html( $label ); ?></option>
-				<?php } ?>
-				</select>
-				<label for="_subscription_period" class="wcs_hidden_label"><?php esc_html_e( 'Subscription period', 'woocommerce-subscriptions' ); ?></label>
-				<select id="_subscription_period" name="_subscription_period" class="wc_input_subscription_period last" >
-				<?php foreach ( wcs_get_subscription_period_strings() as $value => $label ) { ?>
-					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $chosen_period, true ) ?>><?php echo esc_html( $label ); ?></option>
-				<?php } ?>
-				</select>
-			</span>
-			<?php echo wcs_help_tip( $price_tooltip ); ?>
-		</p>
-		<?php
-		*/
-
 		// Subscription Length
-		/*woocommerce_wp_select( array(
+		woocommerce_wp_select( array(//5
 			'id'          => '_subscription_length',
 			'class'       => 'wc_input_subscription_length select short',
 			'label'       => __( 'Expire after', 'woocommerce-subscriptions' ),
@@ -441,9 +368,29 @@ class WC_Subscriptions_Admin {
 			'description' => __( 'Automatically expire the subscription after this length of time. This length is in addition to any free trial or amount of time provided before a synchronised first renewal date.', 'woocommerce-subscriptions' ),
 			)
 		);
-
+		woocommerce_wp_text_input( array(//6
+			'id'			=> '_card_description',
+			'label'			=> $c_descrip_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $cc_tooltip,
+			'type' 			=> 'text',
+		) );
+		woocommerce_wp_text_input( array(//7
+			'id'			=> '_subscription_period_interval',
+			'label'			=> $interval_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $in_tooltip,
+			'type' 			=> 'text',
+		) );
+		woocommerce_wp_text_input( array(//8
+			'id'			=> '_subscription_period',
+			'label'			=> $icount_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $ic_tooltip,
+			'type' 			=> 'text',
+		) );
 		// Sign-up Fee
-		woocommerce_wp_text_input( array(
+		woocommerce_wp_text_input( array(//9
 			'id'          => '_subscription_sign_up_fee',
 			'class'       => 'wc_input_subscription_intial_price wc_input_price  short',
 			// translators: %s is a currency symbol / code
@@ -457,28 +404,15 @@ class WC_Subscriptions_Admin {
 				'step' => 'any',
 				'min'  => '0',
 			),
-		) );*/
-
-		// Trial Length
-		/*?><p class="form-field _subscription_trial_length_field">
-			<label for="_subscription_trial_length"><?php esc_html_e( 'Free trial', 'woocommerce-subscriptions' ); ?></label>
-			<span class="wrap">
-				<input type="text" id="_subscription_trial_length" name="_subscription_trial_length" class="wc_input_subscription_trial_length" value="<?php echo esc_attr( $chosen_trial_length ); ?>" />
-				<label for="_subscription_trial_period" class="wcs_hidden_label"><?php esc_html_e( 'Subscription Trial Period', 'woocommerce-subscriptions' ); ?></label>
-				<select id="_subscription_trial_period" name="_subscription_trial_period" class="wc_input_subscription_trial_period last" >
-					<?php foreach ( wcs_get_available_time_periods() as $value => $label ) { ?>
-						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $chosen_trial_period, true ) ?>><?php echo esc_html( $label ); ?></option>
-					<?php } ?>
-				</select>
-			</span>
-			<?php echo wcs_help_tip( $trial_tooltip ); ?>
-		</p>
-		<?php
-		*/
-
+		) );
+		woocommerce_wp_text_input( array(//10
+			'id'			=> '_Plan_Id',
+			'label'			=> $PlanId_label,
+			'desc_tip'		=> 'true',
+			'description'	=> $ic_tooltip,
+			'type' 			=> 'text',
+		) );
 		do_action( 'woocommerce_subscriptions_product_options_pricing' );
-
-		//remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_price', 10 );
 
 		wp_nonce_field( 'wcs_subscription_meta', '_wcsnonce' );
 
@@ -496,7 +430,6 @@ class WC_Subscriptions_Admin {
 
 		echo '</div>';
 		echo '<div class="options_group subscription_one_time_shipping show_if_subscription show_if_variable-subscription">';
-
 		// Only one Subscription per customer
 		woocommerce_wp_checkbox( array(
 			'id'          => '_subscription_one_time_shipping',
@@ -504,9 +437,7 @@ class WC_Subscriptions_Admin {
 			'description' => __( 'Shipping for subscription products is normally charged on the initial order and all renewal orders. Enable this to only charge shipping once on the initial order. Note: for this setting to be enabled the subscription must not have a free trial or a synced renewal date.', 'woocommerce-subscriptions' ),
 			'desc_tip'    => true,
 		) );
-
 		do_action( 'woocommerce_subscriptions_product_options_shipping' );
-
 	}
 
 	/**
@@ -576,87 +507,89 @@ class WC_Subscriptions_Admin {
 	 * @since 1.0
 	 */
 	public static function save_subscription_meta($post_id){
-		global $wpdb;
+		global $wpdb, $post;
 
+		echo "function save_subscription_meta" . "<br>";
+		if ( empty( $_POST['_wcsnonce'] ) || ! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' ) || false === self::is_subscription_product_save_request( $post_id, apply_filters( 'woocommerce_subscription_product_types', array( WC_Subscriptions::$name ) ) ) ) {
+			echo "inside IF 561 " . "<br>";
+			echo var_dump($_POST['_wcsnonce']) . "<br>";
+			echo var_dump(! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' )) . "<br>";
+			echo var_dump(false === self::is_subscription_product_save_request( $post_id, apply_filters( 'woocommerce_subscription_product_types', array( WC_Subscriptions::$name ) ) ) ) . "<br>";
+
+			return;
+		}
+		echo "continue 565";
+		/*************************************************************Create 4Geeks customer*****************************************************************/
 		if (is_user_logged_in()){
-				$cu = wp_get_current_user();
+			$cu = wp_get_current_user();
 
-				$total_counts = $wpdb->get_row("SELECT count(*) as total FROM $wpdb->wp_postmeta WHERE meta_value = " . $cu->user_email. " and and meta_key = '_Customer4Geeks'");
-				//echo var_dump($total_counts).' total_counts' . '<br>';
-				if ($total_counts >= 1){
-					//echo '577' . '<br>';
-					$Customer4Geeks = $wpdb->get_row( "SELECT meta_value FROM $wpdb->wp_postmeta WHERE meta_key = '_Customer4Geeks' limit 1");
-				}else{
-					//echo '580' . '<br>';
-					/*$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
-					@chmod($dest_name, 0777);
-					if (!$fp = fopen($dest_name."auth.txt", "r")){
-						//echo "The file can't be opened 582";
-					}
-					$file = $dest_name."auth.txt";
-					$fp = fopen($file, "r");
-					$contents = fread($fp, filesize($file));
-					$fclose($fp);
-					$credentials = explode(" ", $contents);
-					$Client_Id = trim($credentials[0]);
-					*/
+			$total_counts = $wpdb->get_row("SELECT count(*) as total FROM $wpdb->wp_postmeta WHERE meta_value = " . $cu->user_email. " and and meta_key = '_Customer4Geeks'");
+			if ($total_counts >= 1){
+				$Customer4Geeks = $wpdb->get_row( "SELECT meta_value FROM $wpdb->wp_postmeta WHERE meta_key = '_Customer4Geeks' limit 1");
+			}else{
+				$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
 
-					$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
-					$data_to_send = array("grant_type"=>"client_credentials",
-										  "client_id" => "M9nHziaFc1bp1RfHqErgfbpTUTUu8GIstcicnCEg",
-										  "client_secret" => "6eDaNxTOhsAxIjlK618kJ4eddTfVioWAEh5WAgCG8ImBlXMiTRpcXPfz8qs3EKeK9ngWoSRKwVxocco6TveW5iWx6J3s9ytoDCyPqrR3lniqy4WnlW4fRIHQIY7wMOH5"
-									);
-					$response_token = wp_remote_post( $api_auth_url, array(
-							'method' => 'POST',
-							'timeout' => 90,
-							'blocking' => true,
-							'headers' => array('content-type' => 'application/json'),
-							'body' => json_encode($data_to_send, true),
-						) );
-					$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
-					//echo var_dump($api_token);
-
-					$api_custmr_url = 'https://api.payments.4geeks.io/v1/accounts/customers/';
-					$data_to_post = array("name"							 => $cu->user_firstname .' '. $cu->user_lastname,
-										  "email" 							 => $cu->user_email,
-										  "currency" 						 => 'dls',
-										  "credit_card_number" 				 => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
-										  "credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
-										  "exp_month" 						 => substr($_POST['wc-4gpayments-card-expiry'], 0, 2),
-										  "exp_year" 						 => "20" . substr($_POST['wc-4gpayments-card-expiry'], -2)
-									);
-					//echo var_dump($data_to_post);
-					$response = wp_remote_post( $api_custmr_url, array(
-							'method'   => 'POST',
-							'body'     => json_encode($data_to_post, true),
-							'timeout'  => 90,
-							'blocking' => true,
-							'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
-						) );
-					echo var_dump($response);
-
-					$JsonResponse = json_decode($response['body']);
-					$Customer4Geeks = $JsonResponse ->{'key'};
-
-					echo var_dump($Customer4Geeks) . 'Customer4Geeks';
-
+				if (!$fp = fopen($dest_name."auth.txt", "r")){
+					echo "The file can't be opened 576";
 				}
+				$file = $dest_name."auth.txt";
+				$fp = fopen($file, "r");
+				$contents = fread($fp, filesize($file));
+				fclose($fp);
+
+				$credentials = explode(" ", $contents);
+
+				$Client_Id = trim($credentials[0]);
+				$Client_Secret = trim($credentials[1]);
+
+				$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
+				$data_to_send = array("grant_type"=>"client_credentials",
+				"client_id" => $Client_Id,
+				"client_secret" => $Client_Secret
+			);
+			$response_token = wp_remote_post( $api_auth_url, array(
+				'method' => 'POST',
+				'timeout' => 90,
+				'blocking' => true,
+				'headers' => array('content-type' => 'application/json'),
+				'body' => json_encode($data_to_send, true),
+			) );
+			$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
+
+			$api_custmr_url = 'https://api.payments.4geeks.io/v1/accounts/customers/';
+			$data_to_post = array("name"							 => $cu->user_firstname .' '. $cu->user_lastname,
+								"email" 							 => $cu->user_email,
+								"currency" 						 => 'dls',
+								"credit_card_number" 				 => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
+								"credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
+								"exp_month" 						 => substr($_POST['wc-4gpayments-card-expiry'], 0, 2),
+								"exp_year" 						 => "20" . substr($_POST['wc-4gpayments-card-expiry'], -2)
+							);
+			$response = wp_remote_post( $api_custmr_url, array(
+				'method'   => 'POST',
+				'body'     => json_encode($data_to_post, true),
+				'timeout'  => 90,
+				'blocking' => true,
+				'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
+				) );
+				$JsonResponse = json_decode($response['body']);
+				$Customer4Geeks = $JsonResponse ->{'key'};
+			}
 		}
 
 		$api_subscr = "https://api.payments.4geeks.io/v1/plans/subscribe/";
-		$data_subscribe = array('customer_key'=>$Customer4Geeks,
-	  							'plan_key'=>$_POST['_Plan_Id']);
-		$post_subscription = wp_remote_post($api_subscr, array(
-			'method'   => 'POST',
-			'body'     => json_encode($data_subscribe, true),
-			'timeout'  => 90,
-			'blocking' => true,
-			'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
-		));
 
-		if ( empty( $_POST['_wcsnonce'] ) || ! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' ) || false === self::is_subscription_product_save_request( $post_id, apply_filters( 'woocommerce_subscription_product_types', array( WC_Subscriptions::$name ) ) ) ) {
-			return;
-		}
+		$data_subscribe = array('customer_key'=>$Customer4Geeks,
+								'plan_key'=>$_POST['_Plan_Id']
+						  );
+		$post_subscription = wp_remote_post($api_subscr, array(
+								'method'   => 'POST',
+								'body'     => json_encode($data_subscribe, true),
+								'timeout'  => 90,
+								'blocking' => true,
+								'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
+							));
+		/*************************************************End of creation of 4Geeks customer************************************************/
 
 		$subscription_price = isset( $_REQUEST['_subscription_price'] ) ? wc_format_decimal( $_REQUEST['_subscription_price'] ) : '';
 		$sale_price         = wc_format_decimal( $_REQUEST['_sale_price'] );

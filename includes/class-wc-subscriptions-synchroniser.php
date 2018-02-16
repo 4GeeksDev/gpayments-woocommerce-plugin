@@ -293,7 +293,6 @@ class WC_Subscriptions_Synchroniser {
 	 * @since 1.5
 	 */
 	public static function save_subscription_meta( $post_id ) {
-
 		if ( empty( $_POST['_wcsnonce'] ) || ! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' ) ) {
 			return;
 		}
@@ -1343,4 +1342,3 @@ class WC_Subscriptions_Synchroniser {
 
 }
 add_action( 'init', 'WC_Subscriptions_Synchroniser::init' );
-

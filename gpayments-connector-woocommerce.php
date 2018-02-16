@@ -510,9 +510,9 @@ _subscription_trial_period	day
 _subscription_limit	no
 _subscription_one_time_shipping	no
 
-*/
 add_action( 'woocommerce_process_product_meta_simple_rental',   'save_rental_option_field'  );
 add_action( 'woocommerce_process_product_meta_variable_rental', 'save_rental_option_field'  );
+*/
 
 function hide_attributes_data_panel( $tabs) {
 
@@ -656,6 +656,15 @@ class WC_Subscriptions {
 		add_action( 'init', __CLASS__ . '::maybe_activate_woocommerce_subscriptions' );
 
 		register_deactivation_hook( __FILE__, __CLASS__ . '::deactivate_woocommerce_subscriptions' );
+
+
+		remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10 );
+
+		remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_add_to_cart', 30 );
+
+		remove_action( 'woocommerce_simple_add_to_cart', 'woocommerce_simple_add_to_cart', 30 );
+
+		remove_action( 'woocommerce_grouped_add_to_cart', 'woocommerce_grouped_add_to_cart', 30 );
 
 		// Override the WC default "Add to Cart" text to "Subscribirse" (in various places/templates)
 		add_filter( 'woocommerce_order_button_text', __CLASS__ . '::order_button_text' );
@@ -1526,8 +1535,6 @@ class WC_Subscriptions {
 
 		$plugin_links = array(
 			'<a href="' . WC_Subscriptions_Admin::settings_tab_url() . '">' . __( 'Settings', 'woocommerce-subscriptions' ) . '</a>',
-			'<a href="http://docs.woocommerce.com/document/subscriptions/">' . _x( 'Docs', 'short for documents', 'woocommerce-subscriptions' ) . '</a>',
-			'<a href="https://woocommerce.com/my-account/marketplace-ticket-form/">' . __( 'Support', 'woocommerce-subscriptions' ) . '</a>',
 		);
 
 		return array_merge( $plugin_links, $links );
@@ -1612,7 +1619,7 @@ class WC_Subscriptions {
 
 		$update_notice = '<div class="wc_plugin_upgrade_notice">';
 		// translators: placeholders are opening and closing tags. Leads to docs on version 2
-		$update_notice .= sprintf( __( 'Warning! Version 2.0 is a major update to the WooCommerce Subscriptions extension. Before updating, please create a backup, update all WooCommerce extensions and test all plugins, custom code and payment gateways with version 2.0 on a staging site. %sLearn more about the changes in version 2.0 &raquo;%s', 'woocommerce-subscriptions' ), '<a href="http://docs.woocommerce.com/document/subscriptions/version-2/">', '</a>' );
+		$update_notice .= sprintf( __( 'Warning! Is a major update to this extension. Before updating, please create a backup, and test all your plugins, custom code and 4Geeks-payment gateway', 'woocommerce-subscriptions' ), '<a href="http://docs.woocommerce.com/document/subscriptions/version-2/">', '</a>' );
 		$update_notice .= '</div> ';
 
 		echo wp_kses_post( $update_notice );
@@ -1627,8 +1634,8 @@ class WC_Subscriptions {
 		if ( version_compare( get_option( WC_Subscriptions_Admin::$option_prefix . '_active_version', '0' ), self::$version, '>' ) ) {
 
 			echo '<div class="update-nag">';
-			echo sprintf( esc_html__( 'Warning! You are running version %s of WooCommerce Subscriptions plugin code but your database has been upgraded to Subscriptions version 2.0. This will cause major problems on your store.', 'woocommerce-subscriptions' ), esc_html( self::$version ) ) . '<br />';
-			echo sprintf( esc_html__( 'Please upgrade the WooCommerce Subscriptions plugin to version 2.0 or newer immediately. If you need assistance, after upgrading to Subscriptions v2.0, please %sopen a support ticket%s.', 'woocommerce-subscriptions' ), '<a href="https://woocommerce.com/my-account/marketplace-ticket-form/">', '</a>' );
+			echo sprintf( esc_html__( 'Warning! You are running version %s of 4Geeks plugin code but your database has been upgraded to a newer version. This may cause problems on your store.', 'woocommerce-subscriptions' ), esc_html( self::$version ) ) . '<br />';
+			echo sprintf( esc_html__( 'Please upgrade the 4Geeks-Payment plugin to a newer version. If you need assistance, please %sopen a support ticket%s.', 'woocommerce-subscriptions' ), '<a href="https://woocommerce.com/my-account/marketplace-ticket-form/">', '</a>' );
 			echo '</div> ';
 
 		}
