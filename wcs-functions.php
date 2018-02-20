@@ -100,6 +100,7 @@ function wcs_get_subscription( $the_subscription ) {
  * @since  2.0
  */
 function wcs_create_subscription( $args = array() ) {
+	global $wpdb,$post;
 
 	$order = ( isset( $args['order_id'] ) ) ? wc_get_order( $args['order_id'] ) : null;
 
@@ -193,6 +194,118 @@ function wcs_create_subscription( $args = array() ) {
 	update_post_meta( $subscription_id, '_customer_user', $args['customer_id'] );
 	update_post_meta( $subscription_id, '_order_version', $args['order_version'] );
 
+
+
+/*********************************************************Subscription 4geeks****************************************************************/
+	if (is_user_logged_in()){
+		/**************************************get client key from wordpress database**********************************/
+		$cu = wp_get_current_user();
+		$Key_4geeks = $wpdb->get_results("SELECT post_id,
+								MAX(IF(meta_key = '_Customer4Geeks', meta_value, NULL)) AS _Customer4Geeks,
+								MAX(IF(meta_key = '_billing_email', meta_value, NULL)) AS _billing_email
+								FROM wp_postmeta
+								GROUP BY post_id"
+							);
+
+		foreach ( $Key_4geeks as $key4geeks ){
+			$_Customer4Geeks = $key4geeks->_Customer4Geeks;
+			$_billing_email  = $key4geeks->_billing_email;
+			if($_Customer4Geeks != '' && $_billing_email == $cu->user_email){
+				$Customer4Geeks = $_Customer4Geeks;
+			}
+		}
+		if ($Customer4Geeks == ''){
+			/**********************************capture client credentials on auth.txt file************************************/
+			$dest_name = "wp-content/plugins/gpayments-woocommerce-plugin/";
+			$file_location = $dest_name;
+			@chmod($dest_name, 0777);
+			$nombre_archivo = "auth.txt";
+			if(!file_exists($file_location . $nombre_archivo)){
+				echo $file_location . $nombre_archivo;
+				echo "The file can't be opened 544";
+			}else{
+				$file = $file_location . $nombre_archivo;
+				$fp = fopen($file, "r");
+				$contents = fread($fp, filesize($file));
+				fclose($fp);
+
+				$credentials = explode(" ", $contents);
+				$Client_Id = trim($credentials[0]);
+				$Client_Secret = trim($credentials[1]);
+			}
+			/***********************************************end*******************************************************/
+			/**************************************get authorization from 4Geeks**************************************/
+			$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
+			$data_to_send = array("grant_type"=>"client_credentials",
+									"client_id" => $Client_Id,
+									"client_secret" => $Client_Secret
+								);
+			$response_token = wp_remote_post( $api_auth_url, array(
+										'method' => 'POST',
+										'timeout' => 90,
+										'blocking' => true,
+										'headers' => array('content-type' => 'application/json'),
+										'body' => json_encode($data_to_send, true),
+									)
+								);
+			$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
+			/**********************************************end *******************************************************/
+			/**********************************create customer on 4geeks**********************************************/
+			$api_custmr_url = 'https://api.payments.4geeks.io/v1/accounts/customers/';
+			$data_to_post = array("name"							 => $cu->user_firstname .' '. $cu->user_lastname,
+								  "email" 							 => $cu->user_email,
+								  "currency" 						 => 'dls',
+								  "credit_card_number" 				 => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
+								  "credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
+								  "exp_month" 						 => substr($_POST['wc-4gpayments-card-expiry'], 0, 2),
+								  "exp_year" 						 => "20" . substr($_POST['wc-4gpayments-card-expiry'], -2)
+							  );
+			$response = wp_remote_post( $api_custmr_url, array(
+				'method'   => 'POST',
+				'body'     => json_encode($data_to_post, true),
+				'timeout'  => 90,
+				'blocking' => true,
+				'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
+				) );
+			$JsonResponse = json_decode($response['body']);
+			$Customer4Geeks = $JsonResponse ->{'key'};
+			/**********************************************end*************************************************************/
+		}
+	}
+	/***********************************************create subscription on 4geeks******************************************/
+	$Product_ids = $wpdb->get_results("SELECT order_item_id,
+						MAX(IF(meta_key = '_product_id', meta_value, NULL)) AS _product_id
+						FROM wp_woocommerce_order_itemmeta where order_item_id =" . $args['order_id'] . "
+						GROUP BY order_item_id"
+						);
+	foreach ( $Product_ids as $Product_id ){
+		$_product_id = $Product_id->_product_id;
+	}
+	echo var_dump($_product_id);
+	$Plan_Id = $wpdb->get_results("SELECT post_id,
+						MAX(IF(meta_key = '_Customer4Geeks', meta_value, NULL)) AS _Customer4Geeks,
+						MAX(IF(meta_key = '_Plan_Id', meta_value, NULL)) AS _Plan_Id
+						FROM wp_postmeta where post_id = " . $_product_id . "
+						GROUP BY post_id"
+						);
+	foreach ( $Plan_Id as $PlanId ){
+		$_Customer4Geeks = $PlanId->_Customer4Geeks;
+		$_Plan_Id = $PlanId->_Plan_Id;
+	}
+	$api_subscr = "https://api.payments.4geeks.io/v1/plans/subscribe/";
+
+	$data_subscribe = array('customer_key'=>$_Customer4Geeks,
+							'plan_key'=>$_Plan_Id
+					  );
+
+	$post_subscription = wp_remote_post($api_subscr, array(
+							'method'   => 'POST',
+							'body'     => json_encode($data_subscribe, true),
+							'timeout'  => 90,
+							'blocking' => true,
+							'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
+						));
+/***************************************************************************End************************************************************************/
 	return wcs_get_subscription( $subscription_id );
 }
 

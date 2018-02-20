@@ -190,6 +190,22 @@ class WC_Subscriptions_Admin {
 	public static function subscription_pricing_fields() {
 		global $post;
 
+		$chosen_price        = get_post_meta( $post->ID, '_subscription_price', true );
+		$chosen_interval     = get_post_meta( $post->ID, '_subscription_period_interval', true );
+		$chosen_trial_length = WC_Subscriptions_Product::get_trial_length( $post->ID );
+		$chosen_trial_period = WC_Subscriptions_Product::get_trial_period( $post->ID );
+
+		$price_tooltip = __( 'Choose the subscription price, billing interval and period.', 'woocommerce-subscriptions' );
+		// translators: placeholder is trial period validation message if passed an invalid value (e.g. "Trial period can not exceed 4 weeks")
+		$trial_tooltip = sprintf( _x( 'An optional period of time to wait before charging the first recurring payment. Any sign up fee will still be charged at the outset of the subscription. %s', 'Trial period field tooltip on Edit Product administration screen', 'woocommerce-subscriptions' ), self::get_trial_period_validation_message() );
+
+		// Set month as the default billing period
+		if ( ! $chosen_period = get_post_meta( $post->ID, '_subscription_period', true ) ) {
+		 	$chosen_period = 'month';
+		}
+
+		echo '<div class="options_group subscription_pricing show_if_subscription">';
+
 		$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
 
 		if (!$fp = fopen($dest_name."auth.txt", "r")){
@@ -219,7 +235,7 @@ class WC_Subscriptions_Admin {
 		 		'body' => json_encode($data_to_send, true)
 		 	) );
 		$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
-		//echo $api_token;
+		echo $api_token;
 		if($api_token != '' && $api_token != NULL && $api_token != 'undefined'){
 			$api_plan_url = 'https://api.payments.4geeks.io/v1/plans/mine';
 			$response_plan = wp_remote_get($api_plan_url, array('headers' => 'authorization: bearer ' . $api_token));
@@ -227,7 +243,7 @@ class WC_Subscriptions_Admin {
 		}else{
 			echo "No api";
 		}
-		$options[''] = __( 'Seleccione un valor', 'woocommerce'); // default value
+		$options[] = __( 'Seleccione un valor', 'woocommerce'); // default value
 		foreach($plans as $key => $opt){
 			$options[]  = $opt['information']['name'];
 		}
@@ -306,22 +322,9 @@ class WC_Subscriptions_Admin {
 					</script>
 				<?php
 			?></div>
-		</div><?php
-		$chosen_price        = get_post_meta( $post->ID, '_subscription_price', true );
-		$chosen_interval     = get_post_meta( $post->ID, '_subscription_period_interval', true );
-		$chosen_trial_length = WC_Subscriptions_Product::get_trial_length( $post->ID );
-		$chosen_trial_period = WC_Subscriptions_Product::get_trial_period( $post->ID );
+		</div>
+		<?php
 
-		$price_tooltip = __( 'Choose the subscription price, billing interval and period.', 'woocommerce-subscriptions' );
-		// translators: placeholder is trial period validation message if passed an invalid value (e.g. "Trial period can not exceed 4 weeks")
-		$trial_tooltip = sprintf( _x( 'An optional period of time to wait before charging the first recurring payment. Any sign up fee will still be charged at the outset of the subscription. %s', 'Trial period field tooltip on Edit Product administration screen', 'woocommerce-subscriptions' ), self::get_trial_period_validation_message() );
-
-		// Set month as the default billing period
-		if ( ! $chosen_period = get_post_meta( $post->ID, '_subscription_period', true ) ) {
-		 	$chosen_period = 'month';
-		}
-
-		echo '<div class="options_group subscription_pricing show_if_subscription">';
 
 		woocommerce_wp_select(
 			array(
@@ -363,7 +366,6 @@ class WC_Subscriptions_Admin {
 			'id'          => '_subscription_length',
 			'class'       => 'wc_input_subscription_length select short',
 			'label'       => __( 'Expire after', 'woocommerce-subscriptions' ),
-			'options'     => wcs_get_subscription_ranges( $chosen_period ),
 			'desc_tip'    => true,
 			'description' => __( 'Automatically expire the subscription after this length of time. This length is in addition to any free trial or amount of time provided before a synchronised first renewal date.', 'woocommerce-subscriptions' ),
 			)
@@ -412,6 +414,7 @@ class WC_Subscriptions_Admin {
 			'description'	=> $ic_tooltip,
 			'type' 			=> 'text',
 		) );
+
 		do_action( 'woocommerce_subscriptions_product_options_pricing' );
 
 		wp_nonce_field( 'wcs_subscription_meta', '_wcsnonce' );
@@ -430,6 +433,7 @@ class WC_Subscriptions_Admin {
 
 		echo '</div>';
 		echo '<div class="options_group subscription_one_time_shipping show_if_subscription show_if_variable-subscription">';
+
 		// Only one Subscription per customer
 		woocommerce_wp_checkbox( array(
 			'id'          => '_subscription_one_time_shipping',
@@ -437,7 +441,9 @@ class WC_Subscriptions_Admin {
 			'description' => __( 'Shipping for subscription products is normally charged on the initial order and all renewal orders. Enable this to only charge shipping once on the initial order. Note: for this setting to be enabled the subscription must not have a free trial or a synced renewal date.', 'woocommerce-subscriptions' ),
 			'desc_tip'    => true,
 		) );
+
 		do_action( 'woocommerce_subscriptions_product_options_shipping' );
+
 	}
 
 	/**
@@ -499,6 +505,7 @@ class WC_Subscriptions_Admin {
 			</optgroup>
 		<?php endif;
 	}
+
 	/**
 	 * Save meta data for simple subscription product type when the "Edit Product" form is submitted.
 	 *
@@ -506,90 +513,11 @@ class WC_Subscriptions_Admin {
 	 * @return array Array of Product types & their labels, including the Subscription product type.
 	 * @since 1.0
 	 */
-	public static function save_subscription_meta($post_id){
-		global $wpdb, $post;
+	public static function save_subscription_meta( $post_id ) {
 
-		echo "function save_subscription_meta" . "<br>";
 		if ( empty( $_POST['_wcsnonce'] ) || ! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' ) || false === self::is_subscription_product_save_request( $post_id, apply_filters( 'woocommerce_subscription_product_types', array( WC_Subscriptions::$name ) ) ) ) {
-			echo "inside IF 561 " . "<br>";
-			echo var_dump($_POST['_wcsnonce']) . "<br>";
-			echo var_dump(! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' )) . "<br>";
-			echo var_dump(false === self::is_subscription_product_save_request( $post_id, apply_filters( 'woocommerce_subscription_product_types', array( WC_Subscriptions::$name ) ) ) ) . "<br>";
-
 			return;
 		}
-		echo "continue 565";
-		/*************************************************************Create 4Geeks customer*****************************************************************/
-		if (is_user_logged_in()){
-			$cu = wp_get_current_user();
-
-			$total_counts = $wpdb->get_row("SELECT count(*) as total FROM $wpdb->wp_postmeta WHERE meta_value = " . $cu->user_email. " and and meta_key = '_Customer4Geeks'");
-			if ($total_counts >= 1){
-				$Customer4Geeks = $wpdb->get_row( "SELECT meta_value FROM $wpdb->wp_postmeta WHERE meta_key = '_Customer4Geeks' limit 1");
-			}else{
-				$dest_name = "../wp-content/plugins/gpayments-woocommerce-plugin/";
-
-				if (!$fp = fopen($dest_name."auth.txt", "r")){
-					echo "The file can't be opened 576";
-				}
-				$file = $dest_name."auth.txt";
-				$fp = fopen($file, "r");
-				$contents = fread($fp, filesize($file));
-				fclose($fp);
-
-				$credentials = explode(" ", $contents);
-
-				$Client_Id = trim($credentials[0]);
-				$Client_Secret = trim($credentials[1]);
-
-				$api_auth_url = 'https://api.payments.4geeks.io/authentication/token/';
-				$data_to_send = array("grant_type"=>"client_credentials",
-				"client_id" => $Client_Id,
-				"client_secret" => $Client_Secret
-			);
-			$response_token = wp_remote_post( $api_auth_url, array(
-				'method' => 'POST',
-				'timeout' => 90,
-				'blocking' => true,
-				'headers' => array('content-type' => 'application/json'),
-				'body' => json_encode($data_to_send, true),
-			) );
-			$api_token = json_decode(wp_remote_retrieve_body($response_token), true)['access_token'];
-
-			$api_custmr_url = 'https://api.payments.4geeks.io/v1/accounts/customers/';
-			$data_to_post = array("name"							 => $cu->user_firstname .' '. $cu->user_lastname,
-								"email" 							 => $cu->user_email,
-								"currency" 						 => 'dls',
-								"credit_card_number" 				 => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-number'] ),
-								"credit_card_security_code_number" => str_replace( array(' ', '-' ), '', $_POST['wc-4gpayments-card-cvc'] ),
-								"exp_month" 						 => substr($_POST['wc-4gpayments-card-expiry'], 0, 2),
-								"exp_year" 						 => "20" . substr($_POST['wc-4gpayments-card-expiry'], -2)
-							);
-			$response = wp_remote_post( $api_custmr_url, array(
-				'method'   => 'POST',
-				'body'     => json_encode($data_to_post, true),
-				'timeout'  => 90,
-				'blocking' => true,
-				'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
-				) );
-				$JsonResponse = json_decode($response['body']);
-				$Customer4Geeks = $JsonResponse ->{'key'};
-			}
-		}
-
-		$api_subscr = "https://api.payments.4geeks.io/v1/plans/subscribe/";
-
-		$data_subscribe = array('customer_key'=>$Customer4Geeks,
-								'plan_key'=>$_POST['_Plan_Id']
-						  );
-		$post_subscription = wp_remote_post($api_subscr, array(
-								'method'   => 'POST',
-								'body'     => json_encode($data_subscribe, true),
-								'timeout'  => 90,
-								'blocking' => true,
-								'headers'  => array('authorization' => 'bearer ' . $api_token, 'content-type' => 'application/json'),
-							));
-		/*************************************************End of creation of 4Geeks customer************************************************/
 
 		$subscription_price = isset( $_REQUEST['_subscription_price'] ) ? wc_format_decimal( $_REQUEST['_subscription_price'] ) : '';
 		$sale_price         = wc_format_decimal( $_REQUEST['_sale_price'] );
@@ -611,7 +539,14 @@ class WC_Subscriptions_Admin {
 
 		update_post_meta( $post_id, '_sale_price_dates_from', $date_from );
 		update_post_meta( $post_id, '_sale_price_dates_to', $date_to );
-
+		/***************************************************4geeks fields*******************************************************/
+		update_post_meta( $post_id, 'gpayment_plan_option', $_POST['gpayment_plan_option']);
+		update_post_meta( $post_id, '_currency', $_POST['_currency']);
+		update_post_meta( $post_id, '_card_description', $_POST['_card_description']);
+		update_post_meta( $post_id, '_subscription_trial_length', $_POST['_subscription_trial_length']);
+		update_post_meta( $post_id, '_Customer4Geeks', $Customer4Geeks);
+		update_post_meta( $post_id, '_Plan_Id', $_POST['_Plan_Id']);
+		/*****************************************************end***************************************************************/
 		// Update price if on sale
 		if ( ! empty( $sale_price ) && ( ( empty( $date_to ) && empty( $date_from ) ) || ( $date_from < $now && ( empty( $date_to ) || $date_to > $now ) ) ) ) {
 			$price = $sale_price;
@@ -621,25 +556,7 @@ class WC_Subscriptions_Admin {
 
 		update_post_meta( $post_id, '_price', stripslashes( $price ) );
 
-
 		$_POST['_subscription_trial_length'] = absint( $_POST['_subscription_trial_length'] );
-
-		//4geeks fields
-		update_post_meta( $post_id, 'gpayment_plan_option', $_POST['gpayment_plan_option']);
-		update_post_meta( $post_id, '_currency', $_POST['_currency']);
-		update_post_meta( $post_id, '_card_description', $_POST['_card_description']);
-		update_post_meta( $post_id, '_subscription_trial_length', $_POST['_subscription_trial_length']);
-		update_post_meta( $post_id, '_Customer4Geeks', $Customer4Geeks);
-		update_post_meta( $post_id, '_Plan_Id', $_POST['_Plan_Id']);
-
-		// Make sure trial period is within allowable range
-		//$subscription_ranges = wcs_get_subscription_ranges();
-
-		//$max_trial_length = count( $subscription_ranges[ $_POST['_subscription_trial_period'] ] ) - 1;
-
-		//$_POST['_subscription_trial_length'] = $max_trial_length;
-		//if ( $_POST['_subscription_trial_length'] > $max_trial_length ) {
-		//}
 
 		update_post_meta( $post_id, '_subscription_trial_length', $_POST['_subscription_trial_length'] );
 
