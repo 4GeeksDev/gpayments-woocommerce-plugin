@@ -21,7 +21,7 @@ Client_id y Client_secret
 Cuando habilites este medio de pago dentro de Woocommerce, te silicitarán tu client_id y client_secret. 
 Estos valores los pueden conseguir en el email que recibiste cuando iniciaste el registro en 4Geeks Payments.
 
-Si tienes problemas para instalar o habilitar este plugin, por favor repórtalo directamente a hello@4geeks.io o abre un issue.
+Si tienes problemas para instalar o habilitar este plugin, abre un issue.
 
 
 Open Source
