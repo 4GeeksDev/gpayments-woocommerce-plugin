@@ -71,7 +71,7 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 			'entity_description' => array(
 				'title'		=> __( 'Detalle bancario (max 22 caracteres)', 'wc-4gpayments' ),
 				'type'		=> 'text',
-				'default' 	=> 'Pago a traves de 4GP',
+				'default' 	=> get_site_url(),
 				'desc_tip'	=> __( 'Detalle que aparece en el Estado de Cuenta del cliente final', '4gpayments' ),
 				'custom_attributes' => array(
 					'required' => 'required',
@@ -144,7 +144,7 @@ class WC_GPayments_Connection extends WC_Payment_Gateway_CC {
 
 			// This is where the fun stuff begins
 			if($this->entity_description == ''){
-				$this->entity_description = 'Pago a traves de 4GP';
+				$this->entity_description = get_site_url();
 			}
 			$payload = array(
 				"amount"             	=> $customer_order->get_total(),
